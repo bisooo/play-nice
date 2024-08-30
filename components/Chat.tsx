@@ -3,7 +3,7 @@
 const Chat : React.FC = () => {
     return (
         <div className="flex-center">
-          <h1>"CHAT"</h1>
+          <h1>{"CHAT"}</h1>
         </div>
     );
 }
