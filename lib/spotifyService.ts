@@ -30,8 +30,4 @@ export class SpotifyService {
   public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term') {
     return this.get(`me/top/tracks?time_range=${timeRange}`);
   }
-
-  public async getPlaylists() {
-    return this.get('me/playlists');
-  }
 }
