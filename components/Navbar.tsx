@@ -3,14 +3,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import localFont from 'next/font/local';
 import React from 'react';
+import { useSession } from 'next-auth/react';
 
 const logoFont = localFont({ src: '../public/font-style.ttf' })
 
 const Navbar : React.FC = () => {
-    // DUMMY MOCK - USER LOGIN STATUS
-    const isUserLoggedIn = true;
-
-    // STATES
+    
+    const { data: session } = useSession();
+    const isUserLoggedIn = !!session;
 
     return (
         <nav className='flex-start w-full mb-16 pl-5 pr-5 pt-5'>
@@ -27,32 +27,47 @@ const Navbar : React.FC = () => {
             {/* DESKTOP NAVIGATION */} 
             {isUserLoggedIn ? 
                 (
-                    <div className="flex-center w-full gap-x-40">
-                        <Link href="/chat" className={logoFont.className}>
-                            CHAT
-                        </Link>
-                        <Link href="/dashboard" className={logoFont.className}>
-                            DASHBOARD
-                        </Link>
-                    </div>                   
+                    <div className="flex items-center justify-between w-full pr-10 pt-4">
+                        <div className="flex-1 flex justify-center">
+                            <Link href="/dashboard" className={logoFont.className}>DASHBOARD</Link>
+                        </div>
+                        <div className="flex-none">
+                            <Link href="/profile">
+                                <Image
+                                    // SET TO SPOTIFY USER PROFILE IMAGE
+                                    src={session.image ?? 'placeholder.jpg'}
+                                    alt="User Profile"
+                                    width={50}
+                                    height={50}
+                                    className="rounded-full"
+                                    unoptimized={true}
+                                />
+                            </Link>
+                        </div>
+                    </div>
                 ) : 
                 (
                     // LOGIN WITH SPOTIFY
-                    <></>
-            )}
-            <div className="flex-end">
-                <Link href="/profile">
-                    <Image 
-                        // SET TO SPOTIFY USER PROFILE IMAGE
-                        src="/channel-red.jpg"
-                        alt="LOGO"
-                        width={50}
-                        height={50}
-                        className="rounded-full"
-                        unoptimized={true}
-                    />
-                </Link>
-            </div>
+                    <div className="flex items-center justify-between w-full pr-10 pt-4">
+                        <div className="flex-1 flex justify-center">
+                            <h1 className={logoFont.className}>LOGIN WITH SPOTIFY TO CONTINUE</h1>
+                        </div>
+                        <div className="flex-none">
+                            <Link href="/profile">
+                                <Image
+                                    // SET TO PLACE HOLDER IMAGE
+                                    src="placeholder.jpg"
+                                    alt="User Profile"
+                                    width={50}
+                                    height={50}
+                                    className="rounded-full"
+                                    unoptimized={true}
+                                />
+                            </Link>
+                        </div>
+                        
+                    </div>
+                )}
             {/* MOBILE NAVIGATION */}
         </nav>
     )

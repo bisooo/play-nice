@@ -44,5 +44,5 @@ body {
 }
 
 .white_btn {
-  @apply rounded-full border font-semibold border-white bg-black py-0.5 px-3 text-white transition-all hover:bg-white hover:text-black text-center text-sm flex items-center justify-center;
+  @apply rounded-lg rounded-full text-lg border font-semibold border-white bg-black py-4 px-8 text-white transition-all hover:bg-white hover:text-black text-center text-sm flex items-center justify-center;
 }
