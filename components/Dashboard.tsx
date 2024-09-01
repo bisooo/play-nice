@@ -14,7 +14,7 @@ const Dashboard : React.FC = () => {
         const data = await response.json();
         setTrack(data);
       } catch (error) {
-        setError(error.message);
+        setError((error as Error).message);
       }
     };
 
