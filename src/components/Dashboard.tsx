@@ -15,8 +15,8 @@ const Dashboard: React.FC = () => {
         <Image
           src="loading-circle.png"
           alt="LOGO"
-          width={100}
-          height={100}
+          width={48}
+          height={48}
           className="cover"
           unoptimized={true}
         />
@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
         </div>
       ) : (
         <div>
-          <p>"UNTITLED TRACK"</p>
+          <p>{"UNTITLED TRACK"}</p>
           <Image
             src={"./placeholder-album.png"}
             alt="LOGO"
@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
             className="cover"
             unoptimized={true}
           />
-          <p className="text-left">"UNTITLED ALBUM"</p>
+          <p className="text-left">{"UNTITLED ALBUM"}</p>
         </div>
       )}
     </div>

@@ -40,7 +40,7 @@ export function useFetch<T>(url: string, queryParams?: Record<string, any>): Use
     };
 
     fetchData();
-  }, [url, JSON.stringify(queryParams)]);
+  }, [url, queryParams]);
 
   return { data, error, isLoading };
 }
