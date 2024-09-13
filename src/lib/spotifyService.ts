@@ -27,7 +27,7 @@ export class SpotifyService {
     return this.get('me/player/currently-playing');
   }
 
-  public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term') {
-    return this.get(`me/top/tracks?time_range=${timeRange}`);
+  public async getRecommendations(genre:string, tempo:string, energy:string, acousticness:string, danceability:string, instrumentalness:string, liveness:string, speechiness:string, popularity:string) {
+    return this.get(`recommendations?seed_genres=${genre}&target_tempo=${tempo}&target_energy=${energy}&target_acousticness=${acousticness}&target_danceability=${danceability}&target_instrumentalness=${instrumentalness}&target_liveness=${liveness}&target_speechiness=${speechiness}&target_popularity=${popularity}`);
   }
 }

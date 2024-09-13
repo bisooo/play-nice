@@ -1,8 +1,8 @@
 import { NextAuthOptions, Session, JWT, DefaultSession } from "next-auth";
 import { DefaultJWT } from "next-auth/jwt"; 
 import SpotifyProvider from "next-auth/providers/spotify";
-import { refreshAccessToken } from "@lib/spotifyTokenManager";
-import userManager from "@lib/userManager";
+import { refreshAccessToken } from "@/lib/spotifyTokenManager";
+import userManager from "@/lib/userManager";
 
 declare module 'next-auth' {
   interface Session extends DefaultSession {

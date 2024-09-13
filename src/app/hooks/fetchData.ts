@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 
-type UseFetchResult<T> = {
+export type UseFetchResult<T> = {
   data: T | null;
   error: string | null;
   isLoading: boolean;
 };
 
-export function useFetch<T>(url: string): UseFetchResult<T> {
+export function useFetch<T>(url: string, queryParams?: Record<string, any>): UseFetchResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -15,7 +15,18 @@ export function useFetch<T>(url: string): UseFetchResult<T> {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(url);
+        const queryString = queryParams
+          ? '?' +
+            Object.entries(queryParams)
+              .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+              .join('&')
+          : '';
+        const response = await fetch(`${url}${queryString}`);
+
+        // Handle rate limiting
+        if (response.status === 429) {
+          throw new Error('Too many requests, please try again later.');
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
@@ -29,7 +40,7 @@ export function useFetch<T>(url: string): UseFetchResult<T> {
     };
 
     fetchData();
-  }, []);
+  }, [url, JSON.stringify(queryParams)]);
 
   return { data, error, isLoading };
 }
