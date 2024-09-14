@@ -1,33 +1,16 @@
-import { NextAuthOptions, Session, JWT, DefaultSession } from "next-auth";
-import { DefaultJWT } from "next-auth/jwt";
+import { NextAuthOptions } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { refreshAccessToken } from "@/lib/spotifyTokenManager";
 import userManager from "@/lib/userManager";
-
-declare module 'next-auth' {
-  interface Session extends DefaultSession {
-    accessToken?: string;
-    refreshToken?: string;
-    id?: string;
-    image?: string;
-    tokenExpires?: number;
-  }
-
-  interface JWT extends DefaultJWT {
-    accessToken?: string;
-    refreshToken?: string;
-    id?: string;
-    image?: string;
-    tokenExpires?: number;
-  }
-}
+import { SpotifyProfile } from "@/types/spotify";
 
 const SPOTIFY_SCOPES = [
+  "user-read-email",
   "user-read-currently-playing",
   "streaming",
   "user-library-read",
   "user-top-read"
-].join(",");
+].join(" ");
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -43,32 +26,33 @@ export const authOptions: NextAuthOptions = {
     signOut: '/',
   },
   callbacks: {
-    async jwt({ token, account, profile }: { token: JWT; account?: any; profile?: any }) {
+    async jwt({ token, account, profile }) {
       if (account && profile) {
+        const spotifyProfile = profile as SpotifyProfile;
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.id = profile.id;
-        token.image = profile.images?.[0]?.url;
-        token.tokenExpires = account.expires_at * 1000; // Convert to milliseconds
+        token.id = spotifyProfile.id;
+        token.image = spotifyProfile.images?.[0]?.url;
+        token.tokenExpires = account.expires_at ? account.expires_at * 1000 : undefined; // Convert to milliseconds
 
         await userManager.upsertUser({
-          spotifyId: profile.id,
-          email: profile.email,
-          name: profile.display_name,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
+          spotifyId: spotifyProfile.id,
+          email: profile.email!,
+          name: spotifyProfile.display_name!,
+          accessToken: account.access_token!,
+          refreshToken: account.refresh_token!,
         });
       }
 
       // Check if the token needs to be refreshed
       if (token.tokenExpires && Date.now() >= token.tokenExpires) {
         try {
-          const { accessToken, tokenExpiresAt } = await refreshAccessToken(token.refreshToken as string, token.id as string);
+          const { accessToken, tokenExpiresAt } = await refreshAccessToken(token.refreshToken!, token.id!);
           token.accessToken = accessToken;
           token.tokenExpires = tokenExpiresAt;
           
           // Update the user's tokens in the database
-          await userManager.updateUserTokens(token.id as string, accessToken, token.refreshToken as string);
+          await userManager.updateUserTokens(token.id!, accessToken, token.refreshToken!);
         } catch (error) {
           console.error('Error refreshing access token:', error);
           // If refresh fails, clear the token to force re-authentication
@@ -78,10 +62,10 @@ export const authOptions: NextAuthOptions = {
 
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
-      session.id = token.id;
+      session.id = token.id!;
       session.image = token.image;
       session.tokenExpires = token.tokenExpires;
 

@@ -9,13 +9,13 @@ export class SpotifyService {
     this.accessToken = session.accessToken!;
   }
 
-  private async get(endpoint: string) {
+  private async get(endpoint: string, params?: Record<string, string>) {
     try {
       const response = await axios.get(`https://api.spotify.com/v1/${endpoint}`, {
-        method: 'GET',
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
         },
+        params,
       });
       return response.data;
     } catch (error) {
@@ -34,6 +34,14 @@ export class SpotifyService {
       return acc;
     }, {} as Record<string, string>);
   
-    return this.get(`recommendations?${new URLSearchParams(params).toString()}`);
+    return this.get('recommendations', params);
+  }
+
+  public async getTopArtists(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
+    return this.get('me/top/artists', { time_range: timeRange, limit: limit.toString() });
+  }
+
+  public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
+    return this.get('me/top/tracks', { time_range: timeRange, limit: limit.toString() });
   }
 }

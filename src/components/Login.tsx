@@ -19,7 +19,8 @@ const Login: React.FC = () => {
       <div className="flex justify-center items-center py-4">
         <Button
           onClick={handleLogin}
-          className="w-full max-w-xs bg-[#1DB954] hover:bg-[#1ed760] text-white py-3 rounded-full text-lg font-semibold"
+          className="w-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors duration-300"
+          variant="outline"
         >
           LOGIN
         </Button>
