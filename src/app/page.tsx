@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import Login from "../components/Login";
+import CurrentlyPlaying from "../components/CurrentlyPlaying";
 import {
   Accordion,
   AccordionContent,
@@ -8,19 +12,25 @@ import {
 } from "@/components/ui/accordion";
 
 export default function Home() {
+  const { data: session } = useSession();
+
   return (
     <div className="flex flex-col min-h-screen p-4">
       <div className="flex flex-col items-center space-y-4">
         <Login />
-        <div>
-          <Image
-            src="/play-nice-color.png"
-            alt="PLAY-NICE Logo"
-            width={300}
-            height={300}
-            className="cover"
-            unoptimized={true}
-          />
+        <div className="w-full max-w-md">
+          {session ? (
+            <CurrentlyPlaying />
+          ) : (
+            <Image
+              src="/play-nice-color.png"
+              alt="PLAY-NICE Logo"
+              width={300}
+              height={300}
+              className="mx-auto"
+              unoptimized={true}
+            />
+          )}
         </div>
       </div>
       <Accordion
