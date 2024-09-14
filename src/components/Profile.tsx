@@ -9,7 +9,7 @@ const Profile: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="flex flex-col flex-center justify-between">
+      <div className="flex flex-col flex-center text-center justify-between">
         <h1>USER NOT LOGGED IN</h1>
         <Image
           src="/placeholder.jpg"
@@ -24,7 +24,7 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col flex-center justify-between">
+    <div className="flex flex-col flex-center text-center justify-between">
       <h1>AYO, {session.id?.toUpperCase()}</h1>
       <p>TOKEN: {session.accessToken}</p>
       <button

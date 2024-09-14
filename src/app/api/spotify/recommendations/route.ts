@@ -2,6 +2,7 @@ import { SpotifyService } from '@/lib/spotifyService';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
+import { handleApiError } from '@/lib/apiUtils';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,6 @@ export async function GET(req: NextRequest) {
     const recommendations = await spotifyApi.getRecommendations(genre, tempo, energy, acousticness, danceability, instrumentalness, liveness, speechiness, popularity);
     return NextResponse.json(recommendations, { status: 200 });
   } catch (error) {
-    return NextResponse.json((error as Error).message, { status: 500 });
+    return handleApiError(error);
   }
 }

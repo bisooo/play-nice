@@ -1,208 +1,157 @@
 "use client";
 
-import { useFetch } from "@/app/hooks/fetchData";
-import { useCallback, useEffect, useState } from "react";
-import debounce from "lodash.debounce";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Separator } from "./ui/separator";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useFetch } from "@/hooks/useFetch";
+import { ParameterControls } from "@/components/ParameterControls";
+import { RecommendationList } from "@/components/RecommendationList";
+import { GenerateButton } from "@/components/GenerateButton";
+import { ErrorAlert } from "@/components/ErrorAlert";
+import { SpotifyRecommendationsResponse } from "@/types/spotify";
+
+interface FetchParams {
+  genre: string;
+  tempo: number;
+  energy: number;
+  acousticness: number;
+  danceability: number;
+  instrumentalness: number;
+  liveness: number;
+  speechiness: number;
+  popularity: number;
+}
+
+const MAX_RETRIES = 5;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
 
 const Sampler: React.FC = () => {
-  const [genre, setGenre] = useState("hip-hop");
-  // const [year, setYear] = useState(2000); // Default year
-  const [tempo, setTempo] = useState(120); // Default tempo
-  const [energy, setEnergy] = useState(0.5); // Default energy level
-  const [acousticness, setAcousticness] = useState(0.5); // Default acousticness level
-  const [danceability, setDanceability] = useState(0.5); // Default danceability level
-  const [instrumentalness, setInstrumentalness] = useState(0.5); // Default instrumentalness level
-  const [liveness, setLiveness] = useState(0.5); // Default liveness level
-  const [speechiness, setSpeechiness] = useState(0.5); // Default speechiness level
-  const [popularity, setPopularity] = useState(50); // Default popularity level
-
-  const debounceFetchParams = useCallback(
-    debounce((params: any) => {
-      setFetchParams(params);
-    }, 500), // Debounce time of 500ms
-    []
-  );
-  const [fetchParams, setFetchParams] = useState({
-    genre,
-    tempo,
-    energy,
-    acousticness,
-    danceability,
-    instrumentalness,
-    liveness,
-    speechiness,
-    popularity,
+  const [fetchParams, setFetchParams] = useState<FetchParams>({
+    genre: "hip-hop",
+    tempo: 95,
+    energy: 0.5,
+    acousticness: 0.5,
+    danceability: 0.5,
+    instrumentalness: 0.5,
+    liveness: 0.5,
+    speechiness: 0.5,
+    popularity: 50,
   });
-  // const {
-  //   data: recommendations,
-  //   error,
-  //   isLoading,
-  // } = useFetch<any>("/api/spotify/recommendations", fetchParams);
+
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryDelay, setRetryDelay] = useState(INITIAL_RETRY_DELAY);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [playingTrack, setPlayingTrack] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const {
+    data: recommendations,
+    error,
+    isLoading,
+    fetchData,
+  } = useFetch<SpotifyRecommendationsResponse>("/api/spotify/recommendations");
+
+  const updateParam = (key: keyof FetchParams, value: string | number) => {
+    setFetchParams((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleGenerate = useCallback(() => {
+    setRetryCount(0);
+    setRetryDelay(INITIAL_RETRY_DELAY);
+    fetchData(fetchParams);
+  }, [fetchData, fetchParams]);
+
+  const retryFetch = useCallback(() => {
+    if (retryCount < MAX_RETRIES) {
+      const jitter = Math.random() * 1000;
+      const nextDelay = Math.min(retryDelay * 2 + jitter, 60000); // Cap at 60 seconds
+      setRetryDelay(nextDelay);
+      setRetryCount((prevCount) => prevCount + 1);
+      setCountdown(Math.ceil(nextDelay / 1000));
+    } else {
+      setCountdown(null);
+    }
+  }, [retryCount, retryDelay]);
 
   useEffect(() => {
-    debounceFetchParams({
-      genre,
-      tempo,
-      energy,
-      acousticness,
-      danceability,
-      instrumentalness,
-      liveness,
-      speechiness,
-      popularity,
-    });
-  }, [
-    genre,
-    tempo,
-    energy,
-    acousticness,
-    danceability,
-    instrumentalness,
-    liveness,
-    speechiness,
-    popularity,
-  ]);
+    if (error?.status === 429) {
+      retryFetch();
+    } else {
+      setCountdown(null);
+    }
+  }, [error, retryFetch]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown !== null && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            handleGenerate();
+            return null;
+          }
+          return prev ? prev - 1 : null;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown, handleGenerate]);
+
+  const handlePlayPause = useCallback(
+    (trackId: string, previewUrl: string) => {
+      if (playingTrack === trackId) {
+        audioRef.current?.pause();
+        setPlayingTrack(null);
+      } else {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = previewUrl;
+          audioRef.current.play();
+        } else {
+          audioRef.current = new Audio(previewUrl);
+          audioRef.current.play();
+        }
+        setPlayingTrack(trackId);
+      }
+    },
+    [playingTrack]
+  );
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = "";
+      }
+    };
+  }, []);
+
+  const isRateLimitError = error?.status === 429;
+  const errorMessage = isRateLimitError
+    ? `We've hit Spotify's rate limit. Retrying in ${countdown} seconds. (Attempt ${
+        retryCount + 1
+      }/${MAX_RETRIES})`
+    : error?.message;
 
   return (
-    <div className="flex flex-col flex-center justify-between">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">{genre}</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuRadioGroup value={genre} onValueChange={setGenre}>
-            <DropdownMenuRadioItem value="hip-hop">
-              hip-hop
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="r-n-b">r-n-b</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="soul">soul</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          TEMPO : {tempo}
-        </label>
-        <Slider
-          defaultValue={[120]}
-          max={190}
-          step={1}
-          onValueChange={(e) => {
-            setTempo(Number(e));
-          }}
+    <div className="flex flex-col items-center justify-between space-y-6 p-6 max-w-4xl mx-auto">
+      <ParameterControls fetchParams={fetchParams} updateParam={updateParam} />
+      <GenerateButton
+        onClick={handleGenerate}
+        isLoading={isLoading}
+        countdown={countdown}
+      />
+      {error && <ErrorAlert message={errorMessage || "An error occurred"} />}
+      {recommendations ? (
+        <RecommendationList
+          tracks={recommendations.tracks}
+          playingTrack={playingTrack}
+          handlePlayPause={handlePlayPause}
         />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          ENERGY : {energy}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setEnergy(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          ACOUSTICNESS : {acousticness}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setAcousticness(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          DANCE-ABILITY : {danceability}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setDanceability(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          INSTRUMENTAL-NESS : {instrumentalness}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setInstrumentalness(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          LIVE-NESS : {liveness}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setLiveness(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          SPEECH-NESS : {speechiness}
-        </label>
-        <Slider
-          defaultValue={[0.5]}
-          max={1}
-          step={0.1}
-          onValueChange={(e) => {
-            setSpeechiness(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <div className="w-full">
-        <label htmlFor="slider" className="text-lg font-semibold mb-2">
-          POPULARITY : {popularity}
-        </label>
-        <Slider
-          defaultValue={[50]}
-          max={100}
-          step={1}
-          onValueChange={(e) => {
-            setPopularity(Number(e));
-          }}
-        />
-      </div>
-      <Separator className="my-4" />
-      <Button variant="outline">GENERATE</Button>
+      ) : !error && !isLoading ? (
+        <p className="text-center text-muted-foreground">
+          Click Generate to see recommendations here.
+        </p>
+      ) : null}
     </div>
   );
 };

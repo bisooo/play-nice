@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
 
   if (status === "unauthenticated") {
     return (
-      <nav className="flex justify-between items-center w-full mb-16 pl-5 pr-5 pt-10">
+      <nav className="flex justify-between items-center w-full pl-5 pr-5 pt-10">
         <Link href="/" className="flex items-center">
           <Image
             src="/play-nice-white.png"
