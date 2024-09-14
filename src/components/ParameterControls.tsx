@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { genres } from "@/lib/genres";
+import { genres } from "@/lib/constants";
 
 interface FetchParams {
   genre: string;

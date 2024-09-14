@@ -62,7 +62,7 @@ const Profile: React.FC = () => {
               UPDATING...
             </>
           ) : (
-            "UPDATE"
+            "UPDATE DATA"
           )}
         </Button>
         <Button
@@ -70,7 +70,7 @@ const Profile: React.FC = () => {
           className="w-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors duration-300"
           variant="outline"
         >
-          LOGOUT
+          LOG OUT
         </Button>
       </div>
       <Dialog open={dialogState.isOpen} onOpenChange={closeDialog}>

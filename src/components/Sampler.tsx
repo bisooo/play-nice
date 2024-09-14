@@ -1,27 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { useFetch } from "@/hooks/useFetch";
+import { useRetry } from "@/hooks/useRetry";
+import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 import { ParameterControls } from "@/components/ParameterControls";
 import { RecommendationList } from "@/components/RecommendationList";
 import { GenerateButton } from "@/components/GenerateButton";
 import { ErrorAlert } from "@/components/ErrorAlert";
-import { SpotifyRecommendationsResponse } from "@/types/spotify";
-
-interface FetchParams {
-  genre: string;
-  tempo: number;
-  energy: number;
-  acousticness: number;
-  danceability: number;
-  instrumentalness: number;
-  liveness: number;
-  speechiness: number;
-  popularity: number;
-}
-
-const MAX_RETRIES = 5;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
+import { SpotifyRecommendationsResponse, FetchParams } from "@/types/spotify";
 
 const Sampler: React.FC = () => {
   const [fetchParams, setFetchParams] = useState<FetchParams>({
@@ -36,12 +23,6 @@ const Sampler: React.FC = () => {
     popularity: 50,
   });
 
-  const [retryCount, setRetryCount] = useState(0);
-  const [retryDelay, setRetryDelay] = useState(INITIAL_RETRY_DELAY);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [playingTrack, setPlayingTrack] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const {
     data: recommendations,
     error,
@@ -49,88 +30,34 @@ const Sampler: React.FC = () => {
     fetchData,
   } = useFetch<SpotifyRecommendationsResponse>("/api/spotify/recommendations");
 
-  const updateParam = (key: keyof FetchParams, value: string | number) => {
-    setFetchParams((prev) => ({ ...prev, [key]: value }));
-  };
-
   const handleGenerate = useCallback(() => {
-    setRetryCount(0);
-    setRetryDelay(INITIAL_RETRY_DELAY);
+    retryReset();
     fetchData(fetchParams);
   }, [fetchData, fetchParams]);
 
-  const retryFetch = useCallback(() => {
-    if (retryCount < MAX_RETRIES) {
-      const jitter = Math.random() * 1000;
-      const nextDelay = Math.min(retryDelay * 2 + jitter, 60000); // Cap at 60 seconds
-      setRetryDelay(nextDelay);
-      setRetryCount((prevCount) => prevCount + 1);
-      setCountdown(Math.ceil(nextDelay / 1000));
-    } else {
-      setCountdown(null);
-    }
-  }, [retryCount, retryDelay]);
+  const {
+    retryCount,
+    countdown,
+    retryFetch,
+    reset: retryReset,
+  } = useRetry(handleGenerate);
 
-  useEffect(() => {
-    if (error?.status === 429) {
-      retryFetch();
-    } else {
-      setCountdown(null);
-    }
-  }, [error, retryFetch]);
+  const { playingTrack, handlePlayPause } = useAudioPlayback();
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown !== null && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev === 1) {
-            handleGenerate();
-            return null;
-          }
-          return prev ? prev - 1 : null;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [countdown, handleGenerate]);
-
-  const handlePlayPause = useCallback(
-    (trackId: string, previewUrl: string) => {
-      if (playingTrack === trackId) {
-        audioRef.current?.pause();
-        setPlayingTrack(null);
-      } else {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = previewUrl;
-          audioRef.current.play();
-        } else {
-          audioRef.current = new Audio(previewUrl);
-          audioRef.current.play();
-        }
-        setPlayingTrack(trackId);
-      }
-    },
-    [playingTrack]
-  );
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    return () => {
-      if (audio) {
-        audio.pause();
-        audio.src = "";
-      }
-    };
-  }, []);
+  const updateParam = (key: keyof FetchParams, value: string | number) => {
+    setFetchParams((prev) => ({ ...prev, [key]: value }));
+  };
 
   const isRateLimitError = error?.status === 429;
   const errorMessage = isRateLimitError
     ? `We've hit Spotify's rate limit. Retrying in ${countdown} seconds. (Attempt ${
         retryCount + 1
-      }/${MAX_RETRIES})`
+      }/${5})`
     : error?.message;
+
+  if (isRateLimitError) {
+    retryFetch();
+  }
 
   return (
     <div className="flex flex-col items-center justify-between space-y-6 p-6 max-w-4xl mx-auto">
