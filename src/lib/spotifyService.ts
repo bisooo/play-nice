@@ -1,3 +1,4 @@
+import { TrackParams } from '@/types/spotifyTypes';
 import axios from 'axios';
 import { Session } from 'next-auth';
 
@@ -27,7 +28,12 @@ export class SpotifyService {
     return this.get('me/player/currently-playing');
   }
 
-  public async getRecommendations(genre:string, tempo:string, energy:string, acousticness:string, danceability:string, instrumentalness:string, liveness:string, speechiness:string, popularity:string) {
-    return this.get(`recommendations?seed_genres=${genre}&target_tempo=${tempo}&target_energy=${energy}&target_acousticness=${acousticness}&target_danceability=${danceability}&target_instrumentalness=${instrumentalness}&target_liveness=${liveness}&target_speechiness=${speechiness}&target_popularity=${popularity}`);
+  public async getRecommendations(trackParams: TrackParams) {
+    const params = Object.entries(trackParams).reduce((acc, [key, value]) => {
+      acc[key] = value.toString();
+      return acc;
+    }, {} as Record<string, string>);
+  
+    return this.get(`recommendations?${new URLSearchParams(params).toString()}`);
   }
 }

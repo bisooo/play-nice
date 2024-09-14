@@ -23,17 +23,10 @@ declare module 'next-auth' {
 }
 
 const SPOTIFY_SCOPES = [
-  "user-read-email",
-  "user-read-private",
   "user-read-currently-playing",
-  "user-read-playback-state",
-  "user-modify-playback-state",
   "streaming",
   "user-library-read",
-  "user-library-modify",
-  "playlist-read-private",
-  "playlist-modify-private",
-  "playlist-modify-public"
+  "user-top-read"
 ].join(",");
 
 export const authOptions: NextAuthOptions = {
