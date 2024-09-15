@@ -42,6 +42,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "colorthief": "^2.4.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.7",
     "prisma": "^5.19.0",

@@ -10,9 +10,12 @@ const logoFont = localFont({ src: "../../public/font-style.ttf" });
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
 
+  const navClasses =
+    "flex justify-between items-center w-full pl-5 pr-5 pt-5 bg-black text-white fixed top-0 left-0 right-0 z-50";
+
   if (status === "unauthenticated") {
     return (
-      <nav className="flex justify-between items-center w-full pl-5 pr-5 pt-10">
+      <nav className={navClasses}>
         <Link href="/" className="flex items-center">
           <Image
             src="/play-nice-white.png"
@@ -31,8 +34,7 @@ const Navbar: React.FC = () => {
           <div className="flex-none flex items-center">
             <Link href="/profile">
               <Image
-                // SET TO PLACE HOLDER IMAGE
-                src="placeholder.jpg"
+                src="/placeholder.jpg"
                 alt="User Profile"
                 width={50}
                 height={50}
@@ -48,7 +50,7 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="flex justify-between items-center w-full mb-16 pl-5 pr-5 pt-5">
+    <nav className={`${navClasses} mb-16`}>
       {/* Left Section: Logo */}
       <Link href="/" className="flex-shrink-0">
         <Image

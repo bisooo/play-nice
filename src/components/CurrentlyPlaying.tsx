@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import ColorThief from "colorthief";
 
 interface Track {
   item: {
@@ -23,7 +24,9 @@ interface Track {
 const FETCH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 
-const CurrentlyPlaying: React.FC = () => {
+const CurrentlyPlaying: React.FC<{
+  onColorsExtracted: (colors: string[]) => void;
+}> = ({ onColorsExtracted }) => {
   const [retryCount, setRetryCount] = useState(0);
   const [retryDelay, setRetryDelay] = useState(1000);
 
@@ -58,14 +61,30 @@ const CurrentlyPlaying: React.FC = () => {
     }
   }, [error, retryCount, retryDelay, fetchData]);
 
+  useEffect(() => {
+    if (track && track.item) {
+      const img = new window.Image();
+      img.crossOrigin = "Anonymous";
+      img.src = track.item.album.images[0].url;
+      img.onload = () => {
+        const colorThief = new ColorThief();
+        const palette = colorThief.getPalette(img, 5);
+        const colors = palette.map(
+          (color) => `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+        );
+        onColorsExtracted(colors);
+      };
+    }
+  }, [track, onColorsExtracted]);
+
   const handleManualRefresh = () => {
     handleFetch();
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-opacity-80 backdrop-blur-md">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-2xl font-bold">NOW PLAYING</CardTitle>
+        <CardTitle className="text-2xl font-bold">Now Playing</CardTitle>
         <Button variant="outline" size="icon" onClick={handleManualRefresh}>
           <ReloadIcon className="h-4 w-4" />
         </Button>
