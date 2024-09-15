@@ -28,3 +28,8 @@ export interface TopTrackData {
   timeRange: TimeRange;
   rank: number;
 }
+
+export interface UserInsights {
+  topArtists: TopArtistData[];
+  topTracks: TopTrackData[];
+}

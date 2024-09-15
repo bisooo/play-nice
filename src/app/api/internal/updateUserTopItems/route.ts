@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
     if (timeSinceLastUpdate > 24 * 60 * 60 * 1000) {
       await UserService.updateUserTopItems(user.id, session);
       await UserManager.updateLastTopItemsUpdate(user.id, currentTime);
-      return NextResponse.json({ message: 'Top items updated successfully' });
+      return NextResponse.json({ message: 'YOUR DATA HAS BEEN UPDATED!' });
     } else {
-      return NextResponse.json({ message: 'Top items are up to date' });
+      return NextResponse.json({ message: 'YOUR DATA IS UP TO DATE!' });
     }
   } catch (error) {
     console.error('Error updating top items:', error);

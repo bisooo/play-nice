@@ -60,7 +60,7 @@ const Sampler: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-between space-y-6 p-6 max-w-4xl mx-auto pt-32">
+    <div className="flex flex-col items-center justify-between space-y-6 p-6 max-w-4xl mx-auto pt-24">
       <ParameterControls fetchParams={fetchParams} updateParam={updateParam} />
       <GenerateButton
         onClick={handleGenerate}

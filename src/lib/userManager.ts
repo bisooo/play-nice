@@ -105,10 +105,19 @@ class UserManager {
     }
   }
 
-  async getTopArtists(userId: string, timeRange: TimeRange) {
+  async getTopArtists(spotifyId: string, timeRange: TimeRange) {
+    if (!spotifyId) {
+      throw new Error('Spotify ID is required');
+    }
     try {
+      const user = await prisma.user.findUnique({
+        where: { spotifyId },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
       return await prisma.topArtist.findMany({
-        where: { userId, timeRange },
+        where: { userId: user.id, timeRange },
         orderBy: { rank: 'asc' },
       });
     } catch (error) {
@@ -117,10 +126,19 @@ class UserManager {
     }
   }
 
-  async getTopTracks(userId: string, timeRange: TimeRange) {
+  async getTopTracks(spotifyId: string, timeRange: TimeRange) {
+    if (!spotifyId) {
+      throw new Error('Spotify ID is required');
+    }
     try {
+      const user = await prisma.user.findUnique({
+        where: { spotifyId },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
       return await prisma.topTrack.findMany({
-        where: { userId, timeRange },
+        where: { userId: user.id, timeRange },
         orderBy: { rank: 'asc' },
       });
     } catch (error) {
