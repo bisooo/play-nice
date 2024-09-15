@@ -63,7 +63,7 @@ const SVG = ({
   useEffect(() => {
     const generatePaths = () => {
       const newPaths = [];
-      const lineCount = window.innerWidth < 768 ? 24 : 48;
+      const lineCount = window.innerWidth < 768 ? 40 : 56;
       for (let i = 0; i < lineCount; i++) {
         const startX = Math.random() * dimensions.width;
         const startY = Math.random() * dimensions.height;
