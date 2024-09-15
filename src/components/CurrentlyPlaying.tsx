@@ -82,23 +82,36 @@ const CurrentlyPlaying: React.FC<{
   };
 
   return (
-    <Card className="w-full bg-opacity-80 backdrop-blur-md">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-2xl font-bold">Now Playing</CardTitle>
-        <Button variant="outline" size="icon" onClick={handleManualRefresh}>
+    <Card className="w-full bg-transparent backdrop-blur-[2px] border border-white/10">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-2xl font-bold text-white">
+          NOW PLAYING
+        </CardTitle>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleManualRefresh}
+          className="text-white hover:text-white/70"
+        >
           <ReloadIcon className="h-4 w-4" />
         </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <ReloadIcon className="h-8 w-8 animate-spin" />
+            <ReloadIcon className="h-8 w-8 animate-spin text-white" />
           </div>
         ) : error ? (
-          <Alert variant="destructive">
+          <Alert
+            variant="destructive"
+            className="bg-red-500/50 border-red-500/50"
+          >
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error.message}</AlertDescription>
-            <Button onClick={handleManualRefresh} className="mt-4">
+            <Button
+              onClick={handleManualRefresh}
+              className="mt-4 bg-white/10 hover:bg-white/20 text-white"
+            >
               Retry
             </Button>
           </Alert>
@@ -113,13 +126,13 @@ const CurrentlyPlaying: React.FC<{
               unoptimized={true}
             />
             <div className="text-center">
-              <h3 className="text-xl font-semibold">{track.item.name}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-xl font-semibold text-white">
+                {track.item.name}
+              </h3>
+              <p className="text-sm text-white/80">
                 {track.item.artists.map((artist) => artist.name).join(", ")}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {track.item.album.name}
-              </p>
+              <p className="text-sm text-white/60">{track.item.album.name}</p>
             </div>
           </div>
         ) : (
@@ -133,8 +146,10 @@ const CurrentlyPlaying: React.FC<{
               unoptimized={true}
             />
             <div className="text-center">
-              <h3 className="text-xl font-semibold">No track playing</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-xl font-semibold text-white">
+                No track playing
+              </h3>
+              <p className="text-sm text-white/80">
                 Start playing a song on Spotify
               </p>
             </div>
