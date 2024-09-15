@@ -4,11 +4,13 @@ import Image from "next/image";
 import localFont from "next/font/local";
 import React from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 const logoFont = localFont({ src: "../../public/font-style.ttf" });
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
 
   const navClasses =
     "flex justify-between items-center w-full pl-5 pr-5 pt-5 bg-black text-white fixed top-0 left-0 right-0 z-50";
@@ -65,10 +67,20 @@ const Navbar: React.FC = () => {
 
       {/* Middle Section: Links (Dashboard and Sampler) */}
       <div className="flex flex-grow items-center justify-center space-x-4 md:space-x-24">
-        <Link href="/dashboard" className={logoFont.className}>
+        <Link
+          href="/dashboard"
+          className={`${logoFont.className} nav-link ${
+            pathname === "/dashboard" ? "active" : ""
+          }`}
+        >
           DASHBOARD
         </Link>
-        <Link href="/sampler" className={logoFont.className}>
+        <Link
+          href="/sampler"
+          className={`${logoFont.className} nav-link ${
+            pathname === "/sampler" ? "active" : ""
+          }`}
+        >
           SAMPLER
         </Link>
       </div>

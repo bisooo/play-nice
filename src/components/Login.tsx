@@ -2,8 +2,9 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
-const Login: React.FC = () => {
+const Login = () => {
   const { data: session, status } = useSession();
 
   const handleLogin = () => {
@@ -11,7 +12,11 @@ const Login: React.FC = () => {
   };
 
   if (status === "loading") {
-    return <div className="h-10"></div>; // Placeholder height to prevent layout shift
+    return (
+      <div className="flex justify-center items-center h-20">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!session) {
@@ -28,8 +33,8 @@ const Login: React.FC = () => {
     );
   }
 
-  // User is authenticated, return a separator
-  return <div />;
+  // User is authenticated
+  return null;
 };
 
 export default Login;

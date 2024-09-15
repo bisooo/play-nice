@@ -7,7 +7,6 @@ import { SpotifyProfile } from "@/types/spotify";
 const SPOTIFY_SCOPES = [
   "user-read-email",
   "user-read-currently-playing",
-  "streaming",
   "user-library-read",
   "user-top-read"
 ].join(" ");
