@@ -11,16 +11,26 @@ export class SpotifyService {
 
   private async get(endpoint: string, params?: Record<string, string>) {
     try {
-      const response = await axios.get(`https://api.spotify.com/v1/${endpoint}`, {
+      const url = new URL(`https://api.spotify.com/v1/${endpoint}`);
+      if (params) {
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+      }
+      const fullUrl = url.toString();
+
+      console.log(`Sending request to Spotify API: ${fullUrl}`);
+      const response = await axios.get(fullUrl, {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
         },
-        params,
       });
       return response.data;
     } catch (error) {
-      console.error(`Error fetching from Spotify API: ${error}`);
-      throw new Error(`Spotify API Error: ${error}`);
+      if (axios.isAxiosError(error)) {
+        throw new Error(`Spotify API Error: ${error.response?.status} ${error.response?.statusText}`);
+      } else {
+        console.error(`Unexpected error:`, error);
+        throw error;
+      }
     }
   }
 
@@ -43,5 +53,18 @@ export class SpotifyService {
 
   public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
     return this.get('me/top/tracks', { time_range: timeRange, limit: limit.toString() });
+  }
+
+  public async searchTrack(track: string, artist: string) {
+    const searchParams = {
+      q: `track:${track} artist:${artist}`,
+      type: 'track',
+      limit: '1'
+    };
+    return this.get('search', searchParams);
+  }
+
+  public async getAudioFeatures(trackId: string) {
+    return this.get(`audio-features/${encodeURIComponent(trackId)}`);
   }
 }

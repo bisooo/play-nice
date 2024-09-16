@@ -40,7 +40,7 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
           htmlFor="genre-select"
           className="text-lg font-semibold whitespace-nowrap"
         >
-          Genre:
+          GENRE:
         </label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -49,7 +49,7 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
               variant="outline"
               className="w-full justify-between"
             >
-              {fetchParams.genre}
+              {fetchParams.genre.toUpperCase()}
               <span className="ml-2">▼</span>
             </Button>
           </DropdownMenuTrigger>
@@ -61,7 +61,7 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
               >
                 {genres.map((genre) => (
                   <DropdownMenuRadioItem key={genre} value={genre}>
-                    {genre}
+                    {genre.toUpperCase()}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
@@ -75,7 +75,7 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
         return (
           <div key={key} className="w-full space-y-2">
             <label htmlFor={key} className="text-lg font-semibold capitalize">
-              {key.replace("-", " ")}:{" "}
+              {key.toUpperCase()}:{" "}
               {typeof value === "number" ? value.toFixed(2) : value}
             </label>
             <Slider

@@ -34,6 +34,12 @@ export interface TrackParams {
   offset: string;
 }
 
+export interface AudioFeatures {
+  key: number;
+  mode: number;
+  tempo: number;
+}
+
 export interface SpotifyImage {
   url: string;
   width: number;
