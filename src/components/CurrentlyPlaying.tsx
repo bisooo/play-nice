@@ -68,7 +68,7 @@ const CurrentlyPlaying: React.FC<{
       img.src = track.item.album.images[0].url;
       img.onload = () => {
         const colorThief = new ColorThief();
-        const palette = colorThief.getPalette(img, 5);
+        const palette = colorThief.getPalette(img, 10);
         const colors = palette.map(
           (color) => `rgb(${color[0]}, ${color[1]}, ${color[2]})`
         );
