@@ -61,6 +61,32 @@
   @apply rounded-lg rounded-full text-lg border font-semibold border-white bg-black py-4 px-8 text-white transition-all hover:bg-white hover:text-black text-center text-sm flex items-center justify-center;
 }
 
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  .blur-sm {
+    filter: blur(4px);
+  }
+
+  .blur-none {
+    filter: blur(0);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
