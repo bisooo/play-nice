@@ -8,7 +8,7 @@ interface CacheItem<T> {
 export function useClientCache<T>(
   key: string,
   fetchData: () => Promise<T>,
-  duration: number = 60 * 60 * 1000 // 1 hour in milliseconds
+  duration: number = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 ) {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,19 +24,20 @@ export function useClientCache<T>(
     if (parsedCache && Date.now() - parsedCache.timestamp < duration) {
       setData(parsedCache.data);
       setIsLoading(false);
-    } else {
-      try {
-        const freshData = await fetchData();
-        setData(freshData);
-        localStorage.setItem(key, JSON.stringify({
-          data: freshData,
-          timestamp: Date.now()
-        }));
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('An error occurred'));
-      } finally {
-        setIsLoading(false);
-      }
+      return;
+    }
+
+    try {
+      const freshData = await fetchData();
+      setData(freshData);
+      localStorage.setItem(key, JSON.stringify({
+        data: freshData,
+        timestamp: Date.now()
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An error occurred'));
+    } finally {
+      setIsLoading(false);
     }
   }, [key, fetchData, duration]);
 
