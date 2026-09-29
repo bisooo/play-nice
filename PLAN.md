@@ -5,9 +5,9 @@ Lean status doc; full history is in HISTORY.md.
 ## Current status
 
 - **Build:** `npm ci`, `tsc --noEmit`, `next build` pass on `74910ee` (2024-10-13); lint has 2 warnings.
-- **Login:** broken. Spotify dev mode stopped returning `email` (2026-03); `User.email` is required + unique, so the user upsert in the NextAuth `jwt` callback throws.
+- **Login:** fixed in code (2026-09-29), not yet verified against a real Spotify app. `User.email` is now optional (Spotify dev mode no longer returns it); token refresh uses `expires_in` and keeps rotated refresh tokens. Needs `npx prisma db push` so the old unique index on `email` is dropped.
 - **Home / currently playing:** code fine; blocked on login.
-- **Profile + top-items sync:** code fine apart from the token-refresh bug; blocked on login. Shows a token prefix in the UI (remove).
+- **Profile + top-items sync:** code fine; blocked on login verification.
 - **Dashboard:** code fine; blocked on login. `popularity` is now always null.
 - **Sampler (Record Digger, Record Analysis):** dead. `/recommendations`, `/audio-features` and `preview_url` removed for dev-mode apps (2024-11).
 
@@ -17,12 +17,12 @@ MongoDB via Prisma. `User` (spotifyId unique, email, name, accessToken, refreshT
 
 ## Auth / access control summary
 
-NextAuth v4 Spotify provider, JWT sessions. Scopes: `user-read-email user-read-currently-playing user-library-read user-top-read`. Tokens stored in the JWT and (plaintext) in `User`. Every API route checks `getServerSession`. Known gaps: `refreshToken` exposed on the client session; tokens unencrypted at rest; `pages.signIn` points at non-existent `/login`.
+NextAuth v4 Spotify provider, JWT sessions. Scopes: `user-read-email user-read-currently-playing user-library-read user-top-read`. Tokens stored in the JWT and (plaintext) in `User`. Every API route checks `getServerSession`. Refresh happens in the `jwt` callback a minute before expiry. Known gaps: `accessToken` is still on the client session (violates hard rule 1; fix by reading it server-side with `getToken` instead of the session); tokens unencrypted at rest.
 
 ## Scope / build order
 
-1. Get login working (email optional, identity by spotifyId; `expires_in` + refresh rotation; redirect URI `127.0.0.1`; drop refreshToken from client session).
-2. Docs in repo: CLAUDE.md, PLAN.md, HISTORY.md, README, `.env.example`, `docs/spotify-api.md`, `.mcp.json`.
+1. ~~Get login working in code~~ (done 2026-09-29) → verify with a real Spotify app; move `accessToken` off the client session.
+2. ~~Docs in repo~~ (done 2026-09-29).
 3. Dependency upgrades: latest Next 14.2.x first; then decide on Next 15/16 + Auth.js v5, Prisma 6. Drop unused `@vercel/kv`, `@shadcn/ui`.
 4. Sampler decision (remove vs rebuild on another audio-features source).
 5. Smoke tests (Playwright) + GitHub Actions for lint/typecheck/build.
@@ -37,8 +37,10 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] B: add `http://127.0.0.1:3000/api/auth/callback/spotify` (and the prod URL) as redirect URIs in the Spotify dashboard.
 - [ ] B: check the MongoDB Atlas cluster is still alive (free tiers pause/delete when idle).
 - [ ] B: decide the Sampler's fate.
-- [ ] B: decide git flow for cloud sessions (push to `main` vs PRs).
-- [ ] Not verified: signed-in flows end to end (needs a working Spotify app + DB).
+- [ ] B: run `npx prisma db push` against the real DB (drops the old unique index on `email`; otherwise a second user without email collides).
+- [ ] Not verified: signed-in flows end to end, including token refresh after an hour (needs a working Spotify app + DB).
+- [ ] Move `accessToken` off the client session (hard rule 1).
+- [ ] Fix the 2 lint warnings (RecordDigger deps, userManager default export).
 
 ## Future ideas
 
@@ -61,7 +63,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Deployment
 
-Assumed Vercel (v0 origin); project name, URL and whether `main` auto-deploys are unconfirmed. Env vars needed there: the five in `.env.example`.
+Assumed Vercel (v0 origin); project name, URL and whether `main` auto-deploys are unconfirmed. Git flow: B chose pushing straight to `main` (2026-09-29). Env vars needed there: the five in `.env.example`.
 
 ## Verification plan
 

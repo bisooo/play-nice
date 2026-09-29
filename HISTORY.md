@@ -26,3 +26,9 @@ Findings (root causes, confirmed by reading code + Spotify docs):
 - `localhost` redirect URIs no longer accepted by Spotify.
 Checks: `npm ci` ok, `tsc --noEmit` clean, `next build` ok, lint 2 warnings (RecordDigger exhaustive-deps, userManager anonymous default export).
 Not verified: runtime login (no Spotify app credentials or DB in the session); Atlas cluster state; Vercel config.
+
+## 2026-09-29 — Login fix, complete in code, not verified at runtime
+
+What was built: `User.email` optional and no longer unique (`prisma/schema.prisma`), login upsert passes `profile.email ?? null` (`src/lib/authOptions.ts`). Token refresh computes expiry from `expires_in`, keeps a rotated `refresh_token`, refreshes 60s early, and writes tokens to the DB once (`src/lib/spotifyTokenManager.ts`). `refreshToken` removed from the client session; `session.error` exposed so the UI can react to a failed refresh. Removed `pages` config (`signIn` pointed at a missing `/login`). Profile page no longer prints a token prefix. Docs committed (CLAUDE.md, PLAN.md, HISTORY.md, README, docs/spotify-api.md, .env.example, .mcp.json). B chose pushing straight to `main`.
+Checks: `tsc --noEmit` clean, `next build` ok, lint same 2 pre-existing warnings.
+Not verified: real Spotify login and refresh (no credentials or DB in the cloud session); `prisma db push` against the real DB is B's to run.
