@@ -23,6 +23,7 @@ When a class of bug bites once and could come back, add a one-line rule here say
 - `npm run build` / `npm start` — production build and serve
 - `npx tsc --noEmit` — typecheck (run `next build` first on a fresh checkout if route types are missing)
 - `npm run lint`
+- `bash scripts/cloud-setup.sh` — cloud sessions, run first: starts the throwaway Mongo replica set, installs deps, pushes the schema (refuses a non-local DATABASE_URL)
 - Cloud sign-in: open `/api/dev/login` (needs `DEV_SPOTIFY_REFRESH_TOKEN`; B refreshes it every 6 months with `node scripts/spotify-refresh-token.mjs` on their machine). Signs in as B with real Spotify data; 404 unless NEXTAUTH_URL and DATABASE_URL are loopback.
 - `npx prisma db push` — sync `prisma/schema.prisma` to MongoDB (Mongo has no Prisma migrations)
 
