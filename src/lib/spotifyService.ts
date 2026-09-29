@@ -34,6 +34,10 @@ export class SpotifyService {
     }
   }
 
+  public async getMe() {
+    return this.get('me');
+  }
+
   public async getCurrentTrack() {
     return this.get('me/player/currently-playing');
   }

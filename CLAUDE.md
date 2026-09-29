@@ -23,6 +23,7 @@ When a class of bug bites once and could come back, add a one-line rule here say
 - `npm run build` / `npm start` — production build and serve
 - `npx tsc --noEmit` — typecheck (run `next build` first on a fresh checkout if route types are missing)
 - `npm run lint`
+- Cloud sign-in: open `/api/dev/login` (needs `DEV_SPOTIFY_REFRESH_TOKEN`; B refreshes it every 6 months with `node scripts/spotify-refresh-token.mjs` on their machine). Signs in as B with real Spotify data; 404 unless NEXTAUTH_URL and DATABASE_URL are loopback.
 - `npx prisma db push` — sync `prisma/schema.prisma` to MongoDB (Mongo has no Prisma migrations)
 
 Every round: typecheck, lint, build (and tests once they exist). Report results.
@@ -79,6 +80,7 @@ Update `PLAN.md` (status, Open/Next, anything stale), append a `HISTORY.md` entr
 - No `window.confirm`/`alert`; use in-app components. Text meets WCAG AA contrast (album-color backgrounds make this easy to break).
 - Guard async fetches with a request-id ref so a stale response can't overwrite a newer one; wrap fetches in try/catch so network errors reach the error UI.
 - Dates: never slice UTC ISO strings or rely on the machine time zone; use the user's time zone explicitly (matters for "listening clock" stats).
+- axios must stay >= 1.16.1: older versions send plain HTTP to the cloud egress proxy (405), so every Spotify call failed in cloud sessions.
 - Install libraries only when the work needs them. Approved beyond current deps: none yet; propose additions.
 
 ## Git

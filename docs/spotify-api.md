@@ -8,6 +8,7 @@ The app runs in **Development Mode** (extended quota is only for organizations).
 - Max **5 users**, each allow-listed in the Spotify dashboard.
 - Redirect URIs: no `localhost`. Use `http://127.0.0.1:<port>/...` locally; HTTPS everywhere else.
 - Token endpoint returns `expires_in` (seconds) and may return a new `refresh_token`; persist it.
+- Refresh tokens expire **6 months after the user authorizes**; refreshing does not extend them (https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens, checked 2026-09-29). Users must sign in again after that.
 
 ## Endpoints we use
 

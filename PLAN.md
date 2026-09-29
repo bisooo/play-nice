@@ -6,6 +6,7 @@ Lean status doc; full history is in HISTORY.md.
 
 - **Build:** `npm ci`, `tsc --noEmit`, `next build` pass on `74910ee` (2024-10-13); lint has 2 warnings.
 - **Login:** fixed in code (2026-09-29), not yet verified against a real Spotify app. `User.email` is now optional (Spotify dev mode no longer returns it); token refresh uses `expires_in` and keeps rotated refresh tokens. Needs `npx prisma db push` so the old unique index on `email` is dropped.
+- **Cloud dev login:** `/api/dev/login` + `scripts/spotify-refresh-token.mjs` built 2026-09-29; guards and Spotify calls verified, end-to-end sign-in waits on B's token. axios bumped to 1.20 (old one couldn't reach Spotify through the cloud proxy).
 - **Home / currently playing:** code fine; blocked on login.
 - **Profile + top-items sync:** code fine; blocked on login verification.
 - **Dashboard:** code fine; blocked on login. `popularity` is now always null.
@@ -33,6 +34,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Open/Next
 
+- [ ] B: run `node scripts/spotify-refresh-token.mjs` locally and add the printed `DEV_SPOTIFY_REFRESH_TOKEN` to the cloud environment's env vars (again every 6 months).
+- [ ] Verify cloud dev login end to end with the real token (home, sync, dashboard vs DB, refresh after an hour, whether Spotify rotates the refresh token).
 - [ ] B: confirm the Spotify-app owner account has Premium (required for dev mode since 2026-03).
 - [ ] B: add `http://127.0.0.1:3000/api/auth/callback/spotify` (and the prod URL) as redirect URIs in the Spotify dashboard.
 - [ ] B: check the MongoDB Atlas cluster is still alive (free tiers pause/delete when idle).
