@@ -14,7 +14,7 @@ generator client {
 model User {
   id                 String      @id @default(auto()) @map("_id") @db.ObjectId
   spotifyId          String      @unique
-  email              String      @unique
+  email              String?
   name               String?
   accessToken        String?
   refreshToken       String?

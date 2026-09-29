@@ -20,10 +20,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET!,
-  pages: {
-    signIn: '/login',
-    signOut: '/',
-  },
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {
@@ -36,22 +32,24 @@ export const authOptions: NextAuthOptions = {
 
         await userManager.upsertUser({
           spotifyId: spotifyProfile.id,
-          email: profile.email!,
+          // Spotify no longer returns email to Development Mode apps
+          email: profile.email ?? null,
           name: spotifyProfile.display_name!,
           accessToken: account.access_token!,
           refreshToken: account.refresh_token!,
         });
       }
 
-      // Check if the token needs to be refreshed
-      if (token.tokenExpires && Date.now() >= token.tokenExpires) {
+      // Refresh a minute before expiry so in-flight requests don't hit a dead token
+      if (token.tokenExpires && Date.now() >= token.tokenExpires - 60 * 1000) {
         try {
-          const { accessToken, tokenExpiresAt } = await refreshAccessToken(token.refreshToken!, token.id!);
+          const { accessToken, tokenExpiresAt, refreshToken } = await refreshAccessToken(token.refreshToken!);
           token.accessToken = accessToken;
           token.tokenExpires = tokenExpiresAt;
-          
-          // Update the user's tokens in the database
-          await userManager.updateUserTokens(token.id!, accessToken, token.refreshToken!);
+          token.refreshToken = refreshToken;
+          delete token.error;
+
+          await userManager.updateUserTokens(token.id!, accessToken, refreshToken);
         } catch (error) {
           console.error('Error refreshing access token:', error);
           // If refresh fails, clear the token to force re-authentication
@@ -63,10 +61,10 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
-      session.refreshToken = token.refreshToken;
       session.id = token.id!;
       session.image = token.image;
       session.tokenExpires = token.tokenExpires;
+      session.error = token.error;
 
       return session;
     },

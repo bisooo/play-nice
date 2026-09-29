@@ -2,7 +2,7 @@ import { TimeRange } from '@prisma/client';
 
 export interface UserData {
   spotifyId: string;
-  email: string;
+  email?: string | null;
   name?: string;
   accessToken?: string;
   refreshToken?: string;
