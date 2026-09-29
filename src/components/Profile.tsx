@@ -44,9 +44,6 @@ const Profile: React.FC = () => {
           <h1 className="text-2xl font-bold mb-4">
             AYO, {session.id?.toUpperCase()}
           </h1>
-          <p className="mb-4 text-sm text-gray-400">
-            TOKEN: {session.accessToken?.substring(0, 20)}...
-          </p>
           <div className="space-y-4 w-full">
             <Button
               onClick={handleUpdateUserTopItems}
