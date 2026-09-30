@@ -84,3 +84,9 @@ B saw a spinner on every visit and range switch. The fetch lived in the On Repea
 Verified via Playwright (scripted, container Chromium, 1440×900) on `next build && next start`, throwaway Mongo, dev login as B: a direct load of `/on-repeat/artists` goes from placeholders to names with no spinner at any sample (50ms); across artists/tracks × all 3 ranges plus a home round trip there were 0 new `/api/user-insights` requests and never a spinner or placeholder; all 6 lists match a direct DB query. With `lastTopItemsUpdate` aged 25h, a real sync took about 2.5s with placeholders showing, and the 3 insights requests fired only after the sync returned 200. `/dashboard` → 404.
 Checks: typecheck clean, lint 1 pre-existing warning, build ok.
 Not verified: production after deploy.
+
+## 2026-09-30 — On Repeat card flip replays on time-range switch, complete and verified
+The flip only ran on page load: revealed cards come from localStorage in a mount effect, so they rotate from 0 to 180deg once; on a range switch the list stayed mounted and newly shown cards rendered already flipped. `TopArtists`/`TopTracks` are now keyed by time range in `OnRepeatList`, so each switch remounts the grid and replays the flip.
+Verified via Playwright (scripted, container Chromium, 1440×900) on `next build && next start`, dev login as B: with every card revealed, switching to PAST YEAR and COUPLE WEEKS on both artists and tracks, the first card's computed transform goes flat → mid-flip (150ms, 300ms) → flipped (800ms).
+Checks: typecheck clean, lint 1 pre-existing warning, build ok.
+Not verified: production after deploy.

@@ -55,7 +55,8 @@ export function OnRepeatLayout({ children }: { children: ReactNode }) {
 const fitToScreen = (chromePx: number) =>
   ({ "--tile": `calc((100dvh - ${chromePx}px) / 2)` }) as CSSProperties;
 
-// Until the preloaded data is in, the lists render as blurred placeholder cards
+// Until the preloaded data is in, the lists render as blurred placeholder cards. Keyed by
+// time range so each switch remounts the grid and replays the card flip
 export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
   const timeRange = useContext(TimeRangeContext);
   const { data: insights, error } = useUserInsights(timeRange);
@@ -71,11 +72,11 @@ export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
 
   return kind === "artists" ? (
     <div style={fitToScreen(350)}>
-      <TopArtists artists={insights?.topArtists} />
+      <TopArtists key={timeRange} artists={insights?.topArtists} />
     </div>
   ) : (
     <div style={fitToScreen(385)}>
-      <TopTracks tracks={insights?.topTracks} />
+      <TopTracks key={timeRange} tracks={insights?.topTracks} />
     </div>
   );
 }
