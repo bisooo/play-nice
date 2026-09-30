@@ -67,7 +67,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Deployment
 
-Assumed Vercel (v0 origin); project name, URL and whether `main` auto-deploys are unconfirmed. Git flow: B chose pushing straight to `main` (2026-09-29). Env vars needed there: the five in `.env.example`.
+Vercel project `play-nice` (team bisooos-projects), https://play-nice.vercel.app. Pushing `main` deploys to production (Git link repaired 2026-09-30; nothing had deployed since 2024-10-13). Git flow: B chose pushing straight to `main` (2026-09-29). Env vars needed there: the five in `.env.example`.
 
 ## Verification plan
 
