@@ -10,12 +10,16 @@ The app runs in **Development Mode** (extended quota is only for organizations).
 - Token endpoint returns `expires_in` (seconds) and may return a new `refresh_token`; persist it.
 - Refresh tokens expire **6 months after the user authorizes**; refreshing does not extend them (https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens, checked 2026-09-29). Users must sign in again after that.
 
+## Rate limits
+
+Counted per app over a rolling 30-second window; dev-mode apps get a lower, unpublished limit. A 429 carries `Retry-After` (seconds); wait that long. (https://developer.spotify.com/documentation/web-api/concepts/rate-limits, checked 2026-09-30.) Now playing polls once per 5s per visible tab, so at most ~6 calls per 30s per user (5 users max).
+
 ## Endpoints we use
 
 | Endpoint | Used by | Status |
 |---|---|---|
 | `GET /me` (via NextAuth profile) | login | Works; **no `email`, `country`, `product`, `followers`** |
-| `GET /me/player/currently-playing` | home card | Works |
+| `GET /me/player/currently-playing` | home card (polled every 5s, trimmed server-side) | Works; 204 with no body when nothing is playing |
 | `GET /me/top/artists`, `/me/top/tracks` (limit 50, 3 time ranges) | top-items sync | Works; **`popularity` removed** from artists/tracks, `followers` from artists |
 | `GET /search` | nothing (Record Analysis removed) | Works; max limit now 10 |
 | `GET /recommendations` | nothing (Sampler removed 2026-09-30) | **Removed** for dev-mode apps (2024-11-27); 404 on 2026-09-30 |

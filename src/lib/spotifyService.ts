@@ -25,7 +25,11 @@ export class SpotifyService {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`Spotify API Error: ${error.response?.status} ${error.response?.statusText}`);
+        // handleApiError reads the status and Retry-After back out of this message
+        const retryAfter = error.response?.headers?.['retry-after'];
+        throw new Error(
+          `Spotify API Error: ${error.response?.status} ${error.response?.statusText}${retryAfter ? ` Retry-After: ${retryAfter}` : ''}`
+        );
       } else {
         console.error(`Unexpected error:`, error);
         throw error;

@@ -53,3 +53,16 @@ export interface SpotifyTopTracksResponse {
   next: string | null;
   previous: string | null;
 }
+// Trimmed GET /me/player/currently-playing, as served by /api/spotify/current-track
+export interface NowPlaying {
+  isPlaying: boolean;
+  progressMs: number;
+  track: {
+    id: string;
+    name: string;
+    artists: string[];
+    album: string;
+    imageUrl: string | null;
+    durationMs: number;
+  } | null;
+}

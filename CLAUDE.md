@@ -42,7 +42,6 @@ Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET
 - Spotify: `src/lib/spotifyService.ts`, called from `src/app/api/spotify/*`. Errors mapped by `handleApiError` (`src/lib/apiUtils.ts`) so 401/429 surface correctly.
 - DB: Prisma on MongoDB (`prisma/schema.prisma`): `User`, `TopArtist`, `TopTrack`. All access through `src/lib/userManager.ts`. Race safety comes from `@@unique` constraints, not app checks. Prisma transactions need a replica set (Atlas has one; local Mongo must run as a single-node replica set).
 - Top-items sync: automatic. `TopItemsSyncProvider` (`src/components/TopItemsSync.tsx`) calls `POST /api/internal/updateUserTopItems` on each signed-in page load; the server syncs only if `lastTopItemsUpdate` is over 24h old → `src/services/userServices.ts`. `UserInsightsProvider` (`src/components/UserInsights.tsx`) waits for it, then preloads `GET /api/user-insights` for all three time ranges into memory (per user, refetched after every sync, never localStorage); On Repeat (`src/components/OnRepeat.tsx`) reads from it and shows placeholder cards until it lands.
-- Client hooks in `src/hooks`.
 
 ## How we work
 

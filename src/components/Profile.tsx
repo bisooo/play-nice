@@ -4,13 +4,17 @@ import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import Login from "./Login";
 
 const Profile: React.FC = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+
 
   return (
     <div className="flex items-center justify-center bg-black text-white pt-32">
-      {!session ? (
+      {status === "loading" ? (
+        <Login />
+      ) : !session ? (
         <div className="flex flex-col items-center text-center">
           <h1 className="text-2xl font-bold mb-4">USER NOT LOGGED IN</h1>
           <Image
@@ -21,6 +25,7 @@ const Profile: React.FC = () => {
             className="rounded-full object-cover mb-4"
             unoptimized={true}
           />
+          <Login />
         </div>
       ) : (
         <div className="flex flex-col items-center text-center">

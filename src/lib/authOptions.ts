@@ -20,6 +20,8 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET!,
+  // Failed or cancelled logins land on the home page (Login shows a message) instead of NextAuth's error page
+  pages: { error: "/" },
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {

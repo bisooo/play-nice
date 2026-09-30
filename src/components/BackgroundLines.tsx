@@ -99,6 +99,8 @@ const SVG = ({
           key={`path-${idx}`}
           d={path}
           stroke={colors[idx % colors.length]}
+          // Fade to the new album's palette instead of snapping
+          style={{ transition: "stroke 1.5s ease-in-out" }}
           strokeWidth="2"
           strokeLinecap="round"
           variants={pathVariants}
