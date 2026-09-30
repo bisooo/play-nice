@@ -1,7 +1,7 @@
 import Dashboard from "../../components/Dashboard";
 
-const DashboardPage: React.FC = () => {
+const OnRepeatPage: React.FC = () => {
   return <Dashboard />;
 };
 
-export default DashboardPage;
+export default OnRepeatPage;

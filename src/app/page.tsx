@@ -59,11 +59,11 @@ export default function Home() {
               </AccordionItem>
               <AccordionItem value="item-2" className="mb-4">
                 <AccordionTrigger className="flex-center">
-                  {"WHAT'S THE DASHBOARD ?"}
+                  {"WHAT'S ON REPEAT ?"}
                 </AccordionTrigger>
                 <AccordionContent className="text-center px-4">
-                  The Dashboard fetches interesting stats from your spotify
-                  listening history and displays them to you
+                  Your most played artists and tracks, from the last few weeks
+                  to the past year
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

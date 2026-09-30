@@ -3,6 +3,11 @@ const nextConfig = {
     images: {
       domains: ['i.scdn.co'],
     },
+    async redirects() {
+      return [
+        { source: '/dashboard', destination: '/on-repeat', permanent: true },
+      ];
+    },
     async headers() {
       return [
         {

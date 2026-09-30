@@ -66,3 +66,9 @@ Removed: `/sampler` page, `/api/spotify/recommendations` and `/api/spotify/track
 Verified via Playwright (scripted, container Chromium, 390px) on `next build && next start`, throwaway Mongo, dev login as B: home has no Sampler text and 2 FAQ items; signed-in nav links are `/`, `/dashboard`, `/profile`; dashboard renders; `/sampler` and both removed API routes return 404.
 Checks: typecheck clean, lint 1 pre-existing warning (the RecordDigger one went with it), build ok.
 Not verified: production after deploy (checked only locally).
+
+## 2026-09-30 — Dashboard renamed to On Repeat, complete and verified
+B asked for a catchier name now that it's the only tab; picked ON REPEAT over "What's on your playlist?" (the page shows most-played, not playlists, and a long label won't fit the phone nav). Nav link reads ON REPEAT, route moved `src/app/dashboard` → `src/app/on-repeat`, `/dashboard` permanently redirects (`next.config.mjs`). Home FAQ is now "WHAT'S ON REPEAT ?" / "Your most played artists and tracks, from the last few weeks to the past year" (B asked for short, non-techy copy). Component still named `Dashboard`.
+Verified via Playwright (scripted, container Chromium, 375px) on `next build && next start`, throwaway Mongo, dev login as B: nav links `/`, `/on-repeat` (ON REPEAT), `/profile`; FAQ opens with the new text; `/dashboard` → 308 → `/on-repeat` with the link marked active and top artists/tracks rendered; no horizontal overflow.
+Checks: typecheck clean, lint 1 pre-existing warning, build ok.
+Not verified: production after deploy.

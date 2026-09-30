@@ -1,6 +1,6 @@
 # PLAY-NICE
 
-Personal Spotify stats app: log in with Spotify, see what's playing (album-art colored background), sync top artists/tracks into a DB, browse them per time range on a dashboard. Scaffolded with v0 in 2024, revived 2026.
+Personal Spotify stats app: log in with Spotify, see what's playing (album-art colored background), sync top artists/tracks into a DB, browse them per time range on the On Repeat page (`/on-repeat`, formerly the dashboard). Scaffolded with v0 in 2024, revived 2026.
 
 Status, roadmap and Open/Next live in `PLAN.md`. The session-by-session record lives in `HISTORY.md`; grep it, don't read it whole.
 

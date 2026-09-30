@@ -65,15 +65,15 @@ const Navbar: React.FC = () => {
         />
       </Link>
 
-      {/* Middle Section: Links (Dashboard) */}
+      {/* Middle Section: Links (On Repeat) */}
       <div className="flex flex-grow items-center justify-center space-x-4 md:space-x-24">
         <Link
-          href="/dashboard"
+          href="/on-repeat"
           className={`${logoFont.className} nav-link ${
-            pathname === "/dashboard" ? "active" : ""
+            pathname === "/on-repeat" ? "active" : ""
           }`}
         >
-          DASHBOARD
+          ON REPEAT
         </Link>
       </div>
 
