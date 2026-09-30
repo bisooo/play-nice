@@ -35,7 +35,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Open/Next
 
-- [ ] Not verified: the 5s CDN cache on now playing actually applies on Vercel (checked locally that the route sends `Cache-Control: public, max-age=0, s-maxage=5`; check `x-vercel-cache: HIT` on prod).
+- [x] Now playing CDN cache works on Vercel (second request `x-vercel-cache: HIT`, 2026-09-30).
 - [ ] B: every ~6 months (next ~2027-03) rerun `scripts/spotify-refresh-token.mjs` and update `SPOTIFY_REFRESH_TOKEN` in Vercel (redeploy) and the cloud env. Until then the site shows "isn't connected to Spotify".
 - [ ] B: remove `NEXTAUTH_SECRET`, `NEXTAUTH_URL` and `DEV_SPOTIFY_REFRESH_TOKEN` from Vercel and the cloud env (no longer read).
 
