@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { TimeRange } from "@prisma/client";
+import { useReveals } from "@/hooks/useReveals";
+import MoveBadge from "@/components/MoveBadge";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopArtistData } from "@/types/user";
@@ -6,31 +9,15 @@ import { TopArtistData } from "@/types/user";
 interface TopArtistsProps {
   // undefined while loading: renders blurred placeholder cards in the same layout
   artists?: TopArtistData[];
+  timeRange: TimeRange;
 }
 
-const TopArtists: React.FC<TopArtistsProps> = ({ artists }) => {
-  const [revealedArtists, setRevealedArtists] = useState<Set<string>>(
-    new Set(),
+const TopArtists: React.FC<TopArtistsProps> = ({ artists, timeRange }) => {
+  const { isRevealed, moveOf, reveal } = useReveals(
+    "artists",
+    timeRange,
+    artists?.slice(0, 10).map((artist) => artist.spotifyId),
   );
-
-  useEffect(() => {
-    const storedRevealedArtists = localStorage.getItem("revealedArtists");
-    if (storedRevealedArtists) {
-      setRevealedArtists(new Set(JSON.parse(storedRevealedArtists)));
-    }
-  }, []);
-
-  const handleReveal = (artistId: string) => {
-    setRevealedArtists((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(artistId);
-      localStorage.setItem(
-        "revealedArtists",
-        JSON.stringify(Array.from(newSet)),
-      );
-      return newSet;
-    });
-  };
 
   return (
     <Card className="w-full">
@@ -41,7 +28,7 @@ const TopArtists: React.FC<TopArtistsProps> = ({ artists }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(5,minmax(0,var(--tile,1fr)))] lg:justify-center gap-x-6 gap-y-4">
           {artists
             ? artists.slice(0, 10).map((artist, index) => {
-                const isRevealed = revealedArtists.has(artist.spotifyId);
+                const faceUp = isRevealed(artist.spotifyId, index + 1);
                 return (
                   <div
                     key={artist.spotifyId}
@@ -52,17 +39,15 @@ const TopArtists: React.FC<TopArtistsProps> = ({ artists }) => {
                       className="relative w-full aspect-square mb-2 transition-all duration-500 ease-in-out cursor-pointer"
                       style={{
                         transformStyle: "preserve-3d",
-                        transform: isRevealed
-                          ? "rotateY(180deg)"
-                          : "rotateY(0deg)",
+                        transform: faceUp ? "rotateY(180deg)" : "rotateY(0deg)",
                       }}
-                      onMouseEnter={() => handleReveal(artist.spotifyId)}
-                      onClick={() => handleReveal(artist.spotifyId)}
+                      onMouseEnter={() => reveal(artist.spotifyId, index + 1)}
+                      onClick={() => reveal(artist.spotifyId, index + 1)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          handleReveal(artist.spotifyId);
+                          reveal(artist.spotifyId, index + 1);
                         }
                       }}
                     >
@@ -88,12 +73,13 @@ const TopArtists: React.FC<TopArtistsProps> = ({ artists }) => {
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="rounded-md object-cover"
                         />
+                        <MoveBadge move={moveOf(artist.spotifyId)} />
                       </div>
                     </div>
                     <div className="text-center w-full">
                       <p
                         className={`text-sm font-medium truncate transition-all duration-300 ${
-                          isRevealed ? "blur-none" : "blur-sm"
+                          faceUp ? "blur-none" : "blur-sm"
                         }`}
                       >
                         {artist.name}

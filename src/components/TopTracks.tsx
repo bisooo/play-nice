@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { TimeRange } from "@prisma/client";
+import { useReveals } from "@/hooks/useReveals";
+import MoveBadge from "@/components/MoveBadge";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopTrackData } from "@/types/user";
@@ -6,29 +9,15 @@ import { TopTrackData } from "@/types/user";
 interface TopTracksProps {
   // undefined while loading: renders blurred placeholder cards in the same layout
   tracks?: TopTrackData[];
+  timeRange: TimeRange;
 }
 
-const TopTracks: React.FC<TopTracksProps> = ({ tracks }) => {
-  const [revealedTracks, setRevealedTracks] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const storedRevealedTracks = localStorage.getItem("revealedTracks");
-    if (storedRevealedTracks) {
-      setRevealedTracks(new Set(JSON.parse(storedRevealedTracks)));
-    }
-  }, []);
-
-  const handleReveal = (trackId: string) => {
-    setRevealedTracks((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(trackId);
-      localStorage.setItem(
-        "revealedTracks",
-        JSON.stringify(Array.from(newSet)),
-      );
-      return newSet;
-    });
-  };
+const TopTracks: React.FC<TopTracksProps> = ({ tracks, timeRange }) => {
+  const { isRevealed, moveOf, reveal } = useReveals(
+    "tracks",
+    timeRange,
+    tracks?.slice(0, 10).map((track) => track.spotifyId),
+  );
 
   return (
     <Card className="w-full">
@@ -39,7 +28,7 @@ const TopTracks: React.FC<TopTracksProps> = ({ tracks }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(5,minmax(0,var(--tile,1fr)))] lg:justify-center gap-x-6 gap-y-4">
           {tracks
             ? tracks.slice(0, 10).map((track, index) => {
-                const isRevealed = revealedTracks.has(track.spotifyId);
+                const faceUp = isRevealed(track.spotifyId, index + 1);
                 return (
                   <div
                     key={track.spotifyId}
@@ -50,17 +39,15 @@ const TopTracks: React.FC<TopTracksProps> = ({ tracks }) => {
                       className="relative w-full aspect-square mb-2 transition-all duration-500 ease-in-out cursor-pointer"
                       style={{
                         transformStyle: "preserve-3d",
-                        transform: isRevealed
-                          ? "rotateY(180deg)"
-                          : "rotateY(0deg)",
+                        transform: faceUp ? "rotateY(180deg)" : "rotateY(0deg)",
                       }}
-                      onMouseEnter={() => handleReveal(track.spotifyId)}
-                      onClick={() => handleReveal(track.spotifyId)}
+                      onMouseEnter={() => reveal(track.spotifyId, index + 1)}
+                      onClick={() => reveal(track.spotifyId, index + 1)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          handleReveal(track.spotifyId);
+                          reveal(track.spotifyId, index + 1);
                         }
                       }}
                     >
@@ -86,19 +73,20 @@ const TopTracks: React.FC<TopTracksProps> = ({ tracks }) => {
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="rounded-md object-cover"
                         />
+                        <MoveBadge move={moveOf(track.spotifyId)} />
                       </div>
                     </div>
                     <div className="text-center w-full">
                       <p
                         className={`text-sm font-medium truncate transition-all duration-300 ${
-                          isRevealed ? "blur-none" : "blur-sm"
+                          faceUp ? "blur-none" : "blur-sm"
                         }`}
                       >
                         {track.name}
                       </p>
                       <p
                         className={`text-xs text-gray-500 truncate transition-all duration-300 ${
-                          isRevealed ? "blur-none" : "blur-sm"
+                          faceUp ? "blur-none" : "blur-sm"
                         }`}
                       >
                         {track.artistName}

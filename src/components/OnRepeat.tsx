@@ -72,11 +72,19 @@ export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
 
   return kind === "artists" ? (
     <div style={fitToScreen(350)}>
-      <TopArtists key={timeRange} artists={insights?.topArtists} />
+      <TopArtists
+        key={timeRange}
+        timeRange={timeRange}
+        artists={insights?.topArtists}
+      />
     </div>
   ) : (
     <div style={fitToScreen(385)}>
-      <TopTracks key={timeRange} tracks={insights?.topTracks} />
+      <TopTracks
+        key={timeRange}
+        timeRange={timeRange}
+        tracks={insights?.topTracks}
+      />
     </div>
   );
 }

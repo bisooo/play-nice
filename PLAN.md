@@ -10,6 +10,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Home / currently playing:** works signed in via dev login. Layout (2026-09-30): full-height column, card centred between navbar and FAQ, narrower on phones (256px) so the album-colour lines show around it, height-capped for short screens. Album-colour background checked only with a mocked track and image (nothing was playing).
 - **Profile + top-items sync:** verified via dev login 2026-09-30 (35–50 artists, 50 tracks per range stored).
 - **On Repeat (was Dashboard):** renamed 2026-09-30, then split the same day into ARTISTS ON REPEAT (`/on-repeat/artists`) and TRACKS ON REPEAT (`/on-repeat/tracks`) nav tabs sharing a layout that keeps the time range and data; `/on-repeat` redirects to artists (temporary); `/dashboard` removed (404). All three time ranges are preloaded into memory right after the page-load sync, so switching tabs/ranges or coming back from home shows no loading; before that, blurred placeholder cards show instead of a spinner. On laptops (lg+) the 2×5 grid is capped by viewport height so neither page scrolls (checked 1024×640 to 1920×1080); phones scroll. Verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Top items sync automatically (2026-09-30): every signed-in page load asks the server to sync, which only runs if data is over 24h old (atomic claim on `lastTopItemsUpdate`, released on failure). The dashboard waits for that before reading, and reads straight from the DB (localStorage cache removed; since 2026-09-30 an in-memory, per-user preload refetched after each sync). Update Data button removed.
+- **Card reveals (gamified 2026-09-30):** saved in localStorage per user, list and time range (`src/hooks/useReveals.ts`). A card is face-down until revealed (hover, click or tap) at its current rank; after a sync, new entries and rank changes go face-down again and show NEW / ↑n / ↓n once flipped. The first visit to a deck is the baseline (no badges). Reveals don't follow you across devices (DB storage is a future idea).
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
 ## Data model
@@ -60,6 +61,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - Sampler replacement via third-party audio features by ISRC, or LLM "dig deeper" suggestions resolved via search.
 - Shareable OG image cards in the extracted album palette.
 - Compare two users' top artists.
+- Store card reveals in the DB so progress follows you across devices.
 - Save short-term top 50 as a playlist (`/playlists/{id}/items`).
 - Consider Postgres if time-series history grows.
 
