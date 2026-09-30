@@ -1,4 +1,3 @@
-import { TrackParams } from '@/types/spotifyTypes';
 import axios from 'axios';
 import { Session } from 'next-auth';
 
@@ -42,33 +41,11 @@ export class SpotifyService {
     return this.get('me/player/currently-playing');
   }
 
-  public async getRecommendations(trackParams: TrackParams) {
-    const params = Object.entries(trackParams).reduce((acc, [key, value]) => {
-      acc[key] = value.toString();
-      return acc;
-    }, {} as Record<string, string>);
-  
-    return this.get('recommendations', params);
-  }
-
   public async getTopArtists(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
     return this.get('me/top/artists', { time_range: timeRange, limit: limit.toString() });
   }
 
   public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
     return this.get('me/top/tracks', { time_range: timeRange, limit: limit.toString() });
-  }
-
-  public async searchTrack(track: string, artist: string) {
-    const searchParams = {
-      q: `track:${track} artist:${artist}`,
-      type: 'track',
-      limit: '1'
-    };
-    return this.get('search', searchParams);
-  }
-
-  public async getAudioFeatures(trackId: string) {
-    return this.get(`audio-features/${encodeURIComponent(trackId)}`);
   }
 }

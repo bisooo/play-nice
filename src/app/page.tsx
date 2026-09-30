@@ -66,16 +66,6 @@ export default function Home() {
                   listening history and displays them to you
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-3" className="mb-4">
-                <AccordionTrigger className="flex-center">
-                  {"WHAT'S THE SAMPLER ?"}
-                </AccordionTrigger>
-                <AccordionContent className="text-center px-4">
-                  The Sampler allows you to query spotify with track
-                  characteristics and genre parameters to get some records that
-                  match your query
-                </AccordionContent>
-              </AccordionItem>
             </Accordion>
           </div>
         </main>

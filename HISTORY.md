@@ -59,3 +59,10 @@ What was built: B picked sync-on-visit over a nightly Vercel Cron (no history is
 Verified via Playwright (container Chromium, 375px) + `next start` + throwaway Mongo with dev login: empty DB → landing on home synced (2.7s, 135 artists / 150 tracks); dashboard top 3 matches DB. Data set 2 days old with a planted fake #1 → dashboard showed a spinner mid-sync, never the fake, then fresh data (fake gone in DB). 3 parallel POSTs on stale data → one `updated:true`, two `false`. Spotify made unreachable (second server with a dead HTTPS_PROXY) → 500, `lastTopItemsUpdate` restored, next POST synced. Profile shows only LOG OUT. Signed out → 401.
 Checks: typecheck clean, lint 2 pre-existing warnings, build ok.
 Not verified: production (B opens the dashboard after deploy).
+
+## 2026-09-30 — Sampler removed, complete and verified
+Confirmed dead first: with B's dev-login token, `GET /recommendations` returned 404, `/audio-features/{id}` and `/audio-analysis/{id}` 403, and `preview_url` was null on a track `GET /tracks/{id}` returned 200. B asked to remove it.
+Removed: `/sampler` page, `/api/spotify/recommendations` and `/api/spotify/track-analysis`, Sampler/RecordDigger/RecordAnalysis/RecommendationList/TrackCard/ParameterControls/GenerateButton/ErrorAlert components, `useRetry`/`useAudioPlayback` hooks, `src/lib/constants.ts` (genres/markets), `src/types/spotifyTypes.ts` and the Sampler types, `getRecommendations`/`searchTrack`/`getAudioFeatures` from `SpotifyService`, the SAMPLER nav link and the "What's the Sampler?" home FAQ. Also the shadcn slider/scroll-area/separator/input/label/dropdown-menu components and their Radix packages, which only the Sampler used.
+Verified via Playwright (scripted, container Chromium, 390px) on `next build && next start`, throwaway Mongo, dev login as B: home has no Sampler text and 2 FAQ items; signed-in nav links are `/`, `/dashboard`, `/profile`; dashboard renders; `/sampler` and both removed API routes return 404.
+Checks: typecheck clean, lint 1 pre-existing warning (the RecordDigger one went with it), build ok.
+Not verified: production after deploy (checked only locally).

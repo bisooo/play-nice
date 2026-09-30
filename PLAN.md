@@ -10,7 +10,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Home / currently playing:** works signed in via dev login (nothing was playing, so the album-colour background wasn't exercised).
 - **Profile + top-items sync:** verified via dev login 2026-09-30 (35–50 artists, 50 tracks per range stored).
 - **Dashboard:** verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Top items sync automatically (2026-09-30): every signed-in page load asks the server to sync, which only runs if data is over 24h old (atomic claim on `lastTopItemsUpdate`, released on failure). The dashboard waits for that before reading, and reads straight from the DB (localStorage cache removed). Update Data button removed.
-- **Sampler (Record Digger, Record Analysis):** dead. `/recommendations`, `/audio-features` and `preview_url` removed for dev-mode apps (2024-11).
+- **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
 ## Data model
 
@@ -25,7 +25,7 @@ NextAuth v4 Spotify provider, JWT sessions. Scopes: `user-read-email user-read-c
 1. ~~Get login working in code~~ (done 2026-09-29) → verify with a real Spotify app; move `accessToken` off the client session.
 2. ~~Docs in repo~~ (done 2026-09-29).
 3. Dependency upgrades: latest Next 14.2.x first; then decide on Next 15/16 + Auth.js v5, Prisma 6. Drop unused `@vercel/kv`, `@shadcn/ui`.
-4. Sampler decision (remove vs rebuild on another audio-features source).
+4. ~~Sampler decision~~ (removed 2026-09-30).
 5. Smoke tests (Playwright) + GitHub Actions for lint/typecheck/build.
 
 ## Roadmap (agreed order)
@@ -42,13 +42,13 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] B: check the MongoDB Atlas cluster is still alive (was paused; resumed 2026-09-30).
 - [x] Production sign-in works on https://play-nice.vercel.app (B confirmed 2026-09-30 after the Atlas resume).
 - [ ] B: re-authorise the Vercel connector for the bisooos-projects team (runtime logs, env vars and project settings return 403).
-- [ ] B: decide the Sampler's fate.
+- [x] B: decide the Sampler's fate (removed 2026-09-30).
 - [ ] B: run `npx prisma db push` against the real DB (drops the old unique index on `email`; otherwise a second user without email collides).
 - [ ] Not verified: signed-in flows end to end, including token refresh after an hour (needs a working Spotify app + DB).
 - [ ] Move `accessToken` off the client session (hard rule 1).
 - [ ] Not verified: auto-sync on production (B: open the dashboard on play-nice.vercel.app; your data should be from today).
 - [x] ~~Key the dashboard's localStorage cache per user~~ (cache removed 2026-09-30).
-- [ ] Fix the 2 lint warnings (RecordDigger deps, userManager default export).
+- [ ] Fix the lint warning (userManager default export).
 
 ## Future ideas
 

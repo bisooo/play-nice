@@ -17,14 +17,14 @@ The app runs in **Development Mode** (extended quota is only for organizations).
 | `GET /me` (via NextAuth profile) | login | Works; **no `email`, `country`, `product`, `followers`** |
 | `GET /me/player/currently-playing` | home card | Works |
 | `GET /me/top/artists`, `/me/top/tracks` (limit 50, 3 time ranges) | top-items sync | Works; **`popularity` removed** from artists/tracks, `followers` from artists |
-| `GET /search` (limit 1) | Record Analysis | Works; max limit now 10 |
-| `GET /recommendations` | Record Digger | **Removed** for dev-mode apps (2024-11-27) |
-| `GET /audio-features/{id}` | Record Analysis | **Removed** for dev-mode apps (2024-11-27) |
-| `preview_url` on tracks | play buttons | **Always null** (2024-11-27) |
+| `GET /search` | nothing (Record Analysis removed) | Works; max limit now 10 |
+| `GET /recommendations` | nothing (Sampler removed 2026-09-30) | **Removed** for dev-mode apps (2024-11-27); 404 on 2026-09-30 |
+| `GET /audio-features/{id}` | nothing (Sampler removed 2026-09-30) | **Removed** for dev-mode apps (2024-11-27); 403 on 2026-09-30 |
+| `preview_url` on tracks | nothing (Sampler removed 2026-09-30) | **Always null** (2024-11-27; still null 2026-09-30) |
 
 ## Other removals to know about
 
-- 2024-11-27: `/audio-analysis`, `/artists/{id}/related-artists`, featured/category playlists.
+- 2024-11-27: `/audio-analysis` (403 on 2026-09-30), `/artists/{id}/related-artists`, featured/category playlists.
 - 2026-03-09: batch `GET /tracks|/albums|/artists|...`, `/artists/{id}/top-tracks`, `/browse/new-releases`, `/browse/categories`, `/users/{id}`, `/users/{id}/playlists`, `/markets`; album `label`/`popularity`; `available_markets`.
 - Renamed 2026: `/playlists/{id}/tracks` → `/playlists/{id}/items`; library writes consolidated into `PUT/DELETE /me/library`.
 

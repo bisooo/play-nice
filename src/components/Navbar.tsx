@@ -65,7 +65,7 @@ const Navbar: React.FC = () => {
         />
       </Link>
 
-      {/* Middle Section: Links (Dashboard and Sampler) */}
+      {/* Middle Section: Links (Dashboard) */}
       <div className="flex flex-grow items-center justify-center space-x-4 md:space-x-24">
         <Link
           href="/dashboard"
@@ -74,14 +74,6 @@ const Navbar: React.FC = () => {
           }`}
         >
           DASHBOARD
-        </Link>
-        <Link
-          href="/sampler"
-          className={`${logoFont.className} nav-link ${
-            pathname === "/sampler" ? "active" : ""
-          }`}
-        >
-          SAMPLER
         </Link>
       </div>
 
