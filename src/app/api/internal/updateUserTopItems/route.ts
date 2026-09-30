@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import UserManager from '../../../../lib/userManager';
 import { authOptions } from '@/lib/authOptions';
 import { UserService } from '@/services/userServices';
 
-export async function POST(request: NextRequest) {
+const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+// Called by the client on every signed-in page load; only syncs when data is over 24h old
+export async function POST() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.id) {
@@ -17,19 +20,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if the update has been run recently
-    const lastUpdateTime = user.lastTopItemsUpdate;
-    const currentTime = new Date();
-    const timeSinceLastUpdate = lastUpdateTime ? currentTime.getTime() - lastUpdateTime.getTime() : Infinity;
-
-    // Only update if it's been more than 24 hours since the last update
-    if (timeSinceLastUpdate > 24 * 60 * 60 * 1000) {
-      await UserService.updateUserTopItems(user.id, session);
-      await UserManager.updateLastTopItemsUpdate(user.id, currentTime);
-      return NextResponse.json({ message: 'YOUR DATA HAS BEEN UPDATED!' });
-    } else {
-      return NextResponse.json({ message: 'YOUR DATA IS UP TO DATE!' });
+    const now = new Date();
+    const claimed = await UserManager.claimTopItemsSync(user.spotifyId, new Date(now.getTime() - SYNC_INTERVAL_MS), now);
+    if (!claimed) {
+      return NextResponse.json({ updated: false });
     }
+
+    try {
+      await UserService.updateUserTopItems(user.id, session);
+    } catch (error) {
+      // Release the claim so the next visit retries
+      await UserManager.updateLastTopItemsUpdate(user.id, user.lastTopItemsUpdate);
+      throw error;
+    }
+    return NextResponse.json({ updated: true });
   } catch (error) {
     console.error('Error updating top items:', error);
     return NextResponse.json({ error: 'Failed to update top items' }, { status: 500 });

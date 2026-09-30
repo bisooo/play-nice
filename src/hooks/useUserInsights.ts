@@ -1,18 +1,39 @@
 import { TimeRange } from '@prisma/client';
-import { useClientCache } from './useClientCache';
+import { useEffect, useRef, useState } from 'react';
 import { UserInsights } from '@/types/user';
-import { useCallback } from 'react';
+import { useTopItemsSync } from '@/components/TopItemsSync';
 
-export const USER_INSIGHTS_CACHE_PREFIX = 'userInsights_';
-
+// Reads straight from the DB (no client cache) so a background sync always shows up
 export function useUserInsights(timeRange: TimeRange) {
-  const fetchInsights = useCallback(async (): Promise<UserInsights> => {
-    const response = await fetch(`/api/user-insights?timeRange=${timeRange}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch insights');
-    }
-    return response.json();
-  }, [timeRange]);
+  const syncStatus = useTopItemsSync();
+  const [data, setData] = useState<UserInsights | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const requestId = useRef(0);
 
-  return useClientCache<UserInsights>(`${USER_INSIGHTS_CACHE_PREFIX}${timeRange}`, fetchInsights);
+  useEffect(() => {
+    // Wait for the page-load sync so stale lists never flash before fresh ones
+    if (syncStatus !== 'done') return;
+
+    const id = ++requestId.current;
+    setIsLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const response = await fetch(`/api/user-insights?timeRange=${timeRange}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch insights');
+        }
+        const insights: UserInsights = await response.json();
+        if (id === requestId.current) setData(insights);
+      } catch (err) {
+        if (id === requestId.current) setError(err instanceof Error ? err : new Error('An error occurred'));
+      } finally {
+        if (id === requestId.current) setIsLoading(false);
+      }
+    })();
+  }, [timeRange, syncStatus]);
+
+  return { data, isLoading, error };
 }

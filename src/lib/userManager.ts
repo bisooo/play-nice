@@ -93,7 +93,24 @@ class UserManager {
     }
   }
 
-  async updateLastTopItemsUpdate(userId: string, updateTime: Date) {
+  // Atomically marks the user as synced if their data is older than staleBefore.
+  // Returns the claimed user, or null if data is fresh or another request claimed it first.
+  async claimTopItemsSync(spotifyId: string, staleBefore: Date, now: Date) {
+    const { count } = await prisma.user.updateMany({
+      where: {
+        spotifyId,
+        OR: [
+          { lastTopItemsUpdate: { isSet: false } },
+          { lastTopItemsUpdate: null },
+          { lastTopItemsUpdate: { lt: staleBefore } },
+        ],
+      },
+      data: { lastTopItemsUpdate: now },
+    });
+    return count === 1 ? this.getUserById(spotifyId) : null;
+  }
+
+  async updateLastTopItemsUpdate(userId: string, updateTime: Date | null) {
     try {
       return await prisma.user.update({
         where: { id: userId },
