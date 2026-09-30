@@ -3,20 +3,17 @@
 import { createContext, useContext, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUserInsights } from "@/hooks/useUserInsights";
+import { useUserInsights } from "@/components/UserInsights";
 import { TimeRange } from "@prisma/client";
-import { UserInsights } from "@/types/user";
 import TopArtists from "@/components/TopArtists";
 import TopTracks from "@/components/TopTracks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
 
-const InsightsContext = createContext<UserInsights | null>(null);
+const TimeRangeContext = createContext<TimeRange>(TimeRange.MEDIUM_TERM);
 
-// Shared by /on-repeat/artists and /on-repeat/tracks, so the time range and data survive switching between them
+// Shared by /on-repeat/artists and /on-repeat/tracks, so the time range survives switching between them
 export function OnRepeatLayout({ children }: { children: ReactNode }) {
   const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.MEDIUM_TERM);
-  const { data: insights, isLoading, error } = useUserInsights(timeRange);
 
   return (
     <div className="container mx-auto px-4 pt-[5.5rem] pb-6 max-w-6xl">
@@ -46,20 +43,9 @@ export function OnRepeatLayout({ children }: { children: ReactNode }) {
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-        </Alert>
-      ) : insights ? (
-        <InsightsContext.Provider value={insights}>
-          {children}
-        </InsightsContext.Provider>
-      ) : null}
+      <TimeRangeContext.Provider value={timeRange}>
+        {children}
+      </TimeRangeContext.Provider>
     </div>
   );
 }
@@ -69,17 +55,27 @@ export function OnRepeatLayout({ children }: { children: ReactNode }) {
 const fitToScreen = (chromePx: number) =>
   ({ "--tile": `calc((100dvh - ${chromePx}px) / 2)` }) as CSSProperties;
 
+// Until the preloaded data is in, the lists render as blurred placeholder cards
 export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
-  const insights = useContext(InsightsContext);
-  if (!insights) return null;
+  const timeRange = useContext(TimeRangeContext);
+  const { data: insights, error } = useUserInsights(timeRange);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return kind === "artists" ? (
     <div style={fitToScreen(350)}>
-      <TopArtists artists={insights.topArtists || []} />
+      <TopArtists artists={insights?.topArtists} />
     </div>
   ) : (
     <div style={fitToScreen(385)}>
-      <TopTracks tracks={insights.topTracks || []} />
+      <TopTracks tracks={insights?.topTracks} />
     </div>
   );
 }
