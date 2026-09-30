@@ -1,6 +1,6 @@
 # PLAY-NICE
 
-Personal Spotify stats app: log in with Spotify, see what's playing (album-art colored background), sync top artists/tracks into a DB, browse them per time range on the On Repeat page (`/on-repeat`, formerly the dashboard). Scaffolded with v0 in 2024, revived 2026.
+Personal Spotify stats app: log in with Spotify, see what's playing (album-art colored background), sync top artists/tracks into a DB, browse them per time range on the Artists/Tracks On Repeat pages (`/on-repeat/artists`, `/on-repeat/tracks`, formerly the dashboard). Scaffolded with v0 in 2024, revived 2026.
 
 Status, roadmap and Open/Next live in `PLAN.md`. The session-by-session record lives in `HISTORY.md`; grep it, don't read it whole.
 
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET
 - Auth: NextAuth v4, Spotify provider, JWT sessions. `src/lib/authOptions.ts`, refresh in `src/lib/spotifyTokenManager.ts`.
 - Spotify: `src/lib/spotifyService.ts`, called from `src/app/api/spotify/*`. Errors mapped by `handleApiError` (`src/lib/apiUtils.ts`) so 401/429 surface correctly.
 - DB: Prisma on MongoDB (`prisma/schema.prisma`): `User`, `TopArtist`, `TopTrack`. All access through `src/lib/userManager.ts`. Race safety comes from `@@unique` constraints, not app checks. Prisma transactions need a replica set (Atlas has one; local Mongo must run as a single-node replica set).
-- Top-items sync: automatic. `TopItemsSyncProvider` (`src/components/TopItemsSync.tsx`) calls `POST /api/internal/updateUserTopItems` on each signed-in page load; the server syncs only if `lastTopItemsUpdate` is over 24h old → `src/services/userServices.ts`. Dashboard waits for it, then reads `GET /api/user-insights` (no client cache).
+- Top-items sync: automatic. `TopItemsSyncProvider` (`src/components/TopItemsSync.tsx`) calls `POST /api/internal/updateUserTopItems` on each signed-in page load; the server syncs only if `lastTopItemsUpdate` is over 24h old → `src/services/userServices.ts`. On Repeat (`src/components/OnRepeat.tsx`, shared layout in `src/app/on-repeat/layout.tsx`) waits for it, then reads `GET /api/user-insights` (no client cache).
 - Client hooks in `src/hooks`.
 
 ## How we work

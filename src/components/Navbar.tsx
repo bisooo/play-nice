@@ -8,6 +8,11 @@ import { usePathname } from "next/navigation";
 
 const logoFont = localFont({ src: "../../public/font-style.ttf" });
 
+const ON_REPEAT_LINKS = [
+  { href: "/on-repeat/artists", label: "ARTISTS ON REPEAT" },
+  { href: "/on-repeat/tracks", label: "TRACKS ON REPEAT" },
+];
+
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -65,16 +70,19 @@ const Navbar: React.FC = () => {
         />
       </Link>
 
-      {/* Middle Section: Links (On Repeat) */}
-      <div className="flex flex-grow items-center justify-center space-x-4 md:space-x-24">
-        <Link
-          href="/on-repeat"
-          className={`${logoFont.className} nav-link ${
-            pathname === "/on-repeat" ? "active" : ""
-          }`}
-        >
-          ON REPEAT
-        </Link>
+      {/* Middle Section: Links (Artists / Tracks On Repeat) */}
+      <div className="flex flex-grow items-center justify-center space-x-6 md:space-x-24 px-3">
+        {ON_REPEAT_LINKS.map(({ href, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`${logoFont.className} nav-link text-center text-xs sm:text-base ${
+              pathname === href ? "active" : ""
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
       </div>
 
       {/* Right Section: Profile Image */}

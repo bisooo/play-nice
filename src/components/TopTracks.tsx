@@ -31,11 +31,11 @@ const TopTracks: React.FC<TopTracksProps> = ({ tracks }) => {
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle>TOP TRACKS</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(5,minmax(0,var(--tile,1fr)))] lg:justify-center gap-x-6 gap-y-4">
           {tracks.slice(0, 10).map((track, index) => {
             const isRevealed = revealedTracks.has(track.spotifyId);
             return (

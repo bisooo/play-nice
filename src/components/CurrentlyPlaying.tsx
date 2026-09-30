@@ -82,9 +82,12 @@ const CurrentlyPlaying: React.FC<{
   };
 
   return (
-    <Card className="w-full bg-transparent backdrop-blur-[2px] border border-white/10">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-bold text-white">
+    <Card
+      data-testid="now-playing"
+      className="w-full bg-transparent backdrop-blur-[2px] border border-white/10"
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 sm:p-6 sm:pb-2">
+        <CardTitle className="text-lg sm:text-2xl font-bold text-white">
           NOW PLAYING
         </CardTitle>
         <Button
@@ -96,9 +99,9 @@ const CurrentlyPlaying: React.FC<{
           <ReloadIcon className="h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
+          <div className="flex justify-center items-center aspect-square">
             <ReloadIcon className="h-8 w-8 animate-spin text-white" />
           </div>
         ) : error ? (
@@ -122,11 +125,11 @@ const CurrentlyPlaying: React.FC<{
               alt={`${track.item.name} album cover`}
               width={300}
               height={300}
-              className="rounded-md mx-auto"
+              className="rounded-md mx-auto w-full h-auto"
               unoptimized={true}
             />
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className="text-base sm:text-xl font-semibold text-white">
                 {track.item.name}
               </h3>
               <p className="text-sm text-white/80">
@@ -142,11 +145,11 @@ const CurrentlyPlaying: React.FC<{
               alt="Placeholder album cover"
               width={300}
               height={300}
-              className="rounded-md mx-auto"
+              className="rounded-md mx-auto w-full h-auto"
               unoptimized={true}
             />
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className="text-base sm:text-xl font-semibold text-white">
                 No track playing
               </h3>
               <p className="text-sm text-white/80">

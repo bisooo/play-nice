@@ -7,9 +7,9 @@ Lean status doc; full history is in HISTORY.md.
 - **Build:** `npm ci`, `tsc --noEmit`, `next build` pass on `74910ee` (2024-10-13); lint has 2 warnings.
 - **Login:** fixed in code (2026-09-29), not yet verified against a real Spotify app. `User.email` is now optional (Spotify dev mode no longer returns it); token refresh uses `expires_in` and keeps rotated refresh tokens. Needs `npx prisma db push` so the old unique index on `email` is dropped.
 - **Cloud dev login:** `/api/dev/login` + `scripts/spotify-refresh-token.mjs` working and verified end to end with B's real account (2026-09-30): sign-in, sync, dashboard, expiry refresh. Spotify did not rotate the refresh token on 3 refreshes. axios bumped to 1.20 (old one couldn't reach Spotify through the cloud proxy).
-- **Home / currently playing:** works signed in via dev login (nothing was playing, so the album-colour background wasn't exercised).
+- **Home / currently playing:** works signed in via dev login. Layout (2026-09-30): full-height column, card centred between navbar and FAQ, narrower on phones (256px) so the album-colour lines show around it, height-capped for short screens. Album-colour background checked only with a mocked track and image (nothing was playing).
 - **Profile + top-items sync:** verified via dev login 2026-09-30 (35–50 artists, 50 tracks per range stored).
-- **On Repeat (was Dashboard):** renamed 2026-09-30; page at `/on-repeat`, `/dashboard` 308-redirects there. Verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Top items sync automatically (2026-09-30): every signed-in page load asks the server to sync, which only runs if data is over 24h old (atomic claim on `lastTopItemsUpdate`, released on failure). The dashboard waits for that before reading, and reads straight from the DB (localStorage cache removed). Update Data button removed.
+- **On Repeat (was Dashboard):** renamed 2026-09-30, then split the same day into ARTISTS ON REPEAT (`/on-repeat/artists`) and TRACKS ON REPEAT (`/on-repeat/tracks`) nav tabs sharing a layout that keeps the time range and data; `/on-repeat` redirects to artists (temporary), `/dashboard` 308s to artists. On laptops (lg+) the 2×5 grid is capped by viewport height so neither page scrolls (checked 1024×640 to 1920×1080); phones scroll. Verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Top items sync automatically (2026-09-30): every signed-in page load asks the server to sync, which only runs if data is over 24h old (atomic claim on `lastTopItemsUpdate`, released on failure). The dashboard waits for that before reading, and reads straight from the DB (localStorage cache removed). Update Data button removed.
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
 ## Data model
@@ -36,7 +36,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 - [x] B: run `node scripts/spotify-refresh-token.mjs` locally and add the printed `DEV_SPOTIFY_REFRESH_TOKEN` to the cloud environment's env vars (done 2026-09-30; redo ~2027-03).
 - [x] Verify cloud dev login end to end with the real token (done 2026-09-30; see HISTORY.md).
-- [ ] Not verified: the album-colour background on the home page (needs a track playing on B's account during a check).
+- [ ] Not verified: the album-colour background with a real playing track (checked 2026-09-30 with a mocked track + cover in Playwright; needs a track playing on B's account, and container Chromium can't load i.scdn.co).
+- [ ] Home page still scrolls ~40px on very short laptop viewports (1366×657); On Repeat pages don't.
 - [ ] B: confirm the Spotify-app owner account has Premium (required for dev mode since 2026-03).
 - [ ] B: add `http://127.0.0.1:3000/api/auth/callback/spotify` (and the prod URL) as redirect URIs in the Spotify dashboard.
 - [x] B: check the MongoDB Atlas cluster is still alive (was paused; resumed 2026-09-30).

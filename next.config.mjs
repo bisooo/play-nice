@@ -5,7 +5,8 @@ const nextConfig = {
     },
     async redirects() {
       return [
-        { source: '/dashboard', destination: '/on-repeat', permanent: true },
+        { source: '/dashboard', destination: '/on-repeat/artists', permanent: true },
+        { source: '/on-repeat', destination: '/on-repeat/artists', permanent: false },
       ];
     },
     async headers() {
