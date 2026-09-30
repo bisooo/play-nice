@@ -112,3 +112,8 @@ Verified via curl + Playwright (scripted, container Chromium) on `next build && 
 Checks: typecheck clean, lint 1 pre-existing warning, build ok.
 Production after deploy (6da75f9): `/profile` 404, now playing 200 with `x-vercel-cache: MISS` then `HIT`, user-insights returns B's 50 artists.
 Not verified: a playing track (nothing was playing); an expired stored access token being refreshed (same code path as first refresh).
+
+## 2026-09-30 — Colored logo on the navbar's right, complete and verified
+B asked for symmetry: the empty right-hand spacer in `Navbar.tsx` is now `/play-nice-color.png` at 50×50, linking home like the white logo on the left.
+Verified via Playwright (scripted, container Chromium) on `next build && next start`: at 1366×657 and 375×667 both logos load, sit 20px from their edge, the On Repeat links are centred to the pixel, no horizontal overflow.
+Checks: typecheck clean, lint 1 pre-existing warning, build ok.

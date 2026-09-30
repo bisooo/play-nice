@@ -47,8 +47,17 @@ const Navbar: React.FC = () => {
         ))}
       </div>
 
-      {/* Right Section: empty, the logo's width, so the links stay centred */}
-      <div className="flex-none w-[50px]" aria-hidden="true" />
+      {/* Right Section: the colored logo, same size as the left one, so the links stay centred */}
+      <Link href="/" className="flex-shrink-0">
+        <Image
+          src="/play-nice-color.png"
+          alt="PLAY-NICE home"
+          width={50}
+          height={50}
+          className="cover"
+          unoptimized={true}
+        />
+      </Link>
     </nav>
   );
 };
