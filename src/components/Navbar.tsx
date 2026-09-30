@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
       {/* Left Section: Logo */}
       <Link href="/" className="flex-shrink-0">
         <Image
-          src="/play-nice-white.png"
+          src="/play-nice-color.png"
           alt="LOGO"
           width={50}
           height={50}

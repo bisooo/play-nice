@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CurrentlyPlaying from "../components/CurrentlyPlaying";
 import { BackgroundLines } from "../components/BackgroundLines";
 import {
@@ -19,6 +19,35 @@ export default function Home() {
     setBackgroundColors(colors);
   };
 
+  // The card is laid out for the space it has with every FAQ answer closed (--fit-h), and an open
+  // answer only scales it down (transform), so it zooms smoothly with the accordion instead of
+  // reflowing every frame (which made the title resize and jump)
+  const areaRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const faqRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const area = areaRef.current;
+    const card = cardRef.current;
+    const faq = faqRef.current;
+    if (!area || !card || !faq) return;
+    const fit = () => {
+      const answers = Array.from(faq.querySelectorAll<HTMLElement>("[role=region]"));
+      const answersHeight = answers.reduce((sum, el) => sum + el.offsetHeight, 0);
+      const fitHeight = area.clientHeight + answersHeight;
+      area.style.setProperty("--fit-h", `${fitHeight}px`);
+      // Shrink only once the card no longer fits, keeping the gap it had around it with the FAQ
+      // closed (up to 16px), so it never hops when the scaling starts or stops
+      const gap = Math.min(16, fitHeight - card.offsetHeight);
+      const scale = Math.min(1, (area.clientHeight - gap) / card.offsetHeight);
+      card.style.transform = scale < 1 ? `scale(${scale})` : "";
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(area);
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-black text-white relative">
       <BackgroundLines
@@ -26,17 +55,17 @@ export default function Home() {
         className="absolute inset-0 z-0"
       >
         {/* Exactly one screen tall, never scrolls: now playing is centred between the navbar and the FAQ,
-            and sizes itself to the space left (cqh), so it shrinks while an FAQ answer is open.
+            sized to the space left with the FAQ closed (--fit-h, 100cqh until measured) and scaled down while an answer is open.
             Top padding = navbar (84px) + the gap above the FAQ, so the space above and below match */}
         <main className="container mx-auto px-4 pt-[7.25rem] pb-6 h-[100dvh] flex flex-col items-center gap-8 [@media(max-height:700px)]:pt-[6.25rem] [@media(max-height:700px)]:gap-4 relative z-10">
-          <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 [container-type:size]">
+          <div ref={areaRef} className="flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 [container-type:size] [--fit-h:100cqh]">
             {/* Phones: a wide frosted card (room for the names) around a smaller cover (--art-max), capped by
                 the height left so it never scrolls. Larger screens: the cover fills the card, which is ~140px taller than wide. */}
-            <div className="w-full max-w-[21rem] [--art-max:max(9rem,min(15rem,calc(100cqh-170px)))] sm:min-w-[11rem] sm:max-w-[min(24rem,calc(100cqh-140px))] sm:[--art-max:100%] lg:max-w-[min(28rem,calc(100cqh-140px))]">
+            <div ref={cardRef} className="w-full max-w-[21rem] [--art-max:max(9rem,min(15rem,calc(var(--fit-h)-170px)))] sm:min-w-[11rem] sm:max-w-[min(24rem,calc(var(--fit-h)-140px))] sm:[--art-max:100%] lg:max-w-[min(28rem,calc(var(--fit-h)-140px))]">
               <CurrentlyPlaying onColorsExtracted={handleColorsExtracted} />
             </div>
           </div>
-          <Accordion type="single" collapsible className="w-full max-w-md">
+          <Accordion ref={faqRef} type="single" collapsible className="w-full max-w-md">
             <AccordionItem value="item-1" className="mb-4">
               <AccordionTrigger className="flex-center">
                 {"WHAT'S PLAY-NICE ?"}
