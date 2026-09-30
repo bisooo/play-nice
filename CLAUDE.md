@@ -33,7 +33,7 @@ Every round: typecheck, lint, build (and tests once they exist). Report results.
 
 ## Env
 
-Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DATABASE_URL`. Env files are gitignored; check `git status` before writing one, and flag immediately if a secret lands in a tracked file.
+Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`, `DATABASE_URL`. Env files are gitignored; check `git status` before writing one, and flag immediately if a secret lands in a tracked file.
 
 ## Architecture
 
