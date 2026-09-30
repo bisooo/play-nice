@@ -3,6 +3,8 @@ import { useClientCache } from './useClientCache';
 import { UserInsights } from '@/types/user';
 import { useCallback } from 'react';
 
+export const USER_INSIGHTS_CACHE_PREFIX = 'userInsights_';
+
 export function useUserInsights(timeRange: TimeRange) {
   const fetchInsights = useCallback(async (): Promise<UserInsights> => {
     const response = await fetch(`/api/user-insights?timeRange=${timeRange}`);
@@ -12,5 +14,5 @@ export function useUserInsights(timeRange: TimeRange) {
     return response.json();
   }, [timeRange]);
 
-  return useClientCache<UserInsights>(`userInsights_${timeRange}`, fetchInsights);
+  return useClientCache<UserInsights>(`${USER_INSIGHTS_CACHE_PREFIX}${timeRange}`, fetchInsights);
 }

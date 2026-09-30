@@ -14,6 +14,8 @@ Status, roadmap and Open/Next live in `PLAN.md`. The session-by-session record l
 6. **Never touch real users' data.** The app has at most 5 Spotify users (dev mode). Test with a disposable DB (local Mongo or a separate Atlas database), never the production `DATABASE_URL`.
 7. **No production writes or deploys from a cloud/remote session without B's explicit OK in that session.**
 
+8. **Anything that writes data a cache serves must invalidate that cache.** Update Data once synced fresh top items while the dashboard kept showing 24h-old localStorage data.
+
 When a class of bug bites once and could come back, add a one-line rule here saying what it was and why.
 
 ## Commands
@@ -40,7 +42,7 @@ Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET
 - Spotify: `src/lib/spotifyService.ts`, called from `src/app/api/spotify/*`. Errors mapped by `handleApiError` (`src/lib/apiUtils.ts`) so 401/429 surface correctly.
 - DB: Prisma on MongoDB (`prisma/schema.prisma`): `User`, `TopArtist`, `TopTrack`. All access through `src/lib/userManager.ts`. Race safety comes from `@@unique` constraints, not app checks. Prisma transactions need a replica set (Atlas has one; local Mongo must run as a single-node replica set).
 - Top-items sync: `POST /api/internal/updateUserTopItems` (once / 24h per user) → `src/services/userServices.ts`; read back via `GET /api/user-insights`.
-- Client hooks in `src/hooks`; `useClientCache` caches in localStorage for 24h (clear it when testing data changes).
+- Client hooks in `src/hooks`; `useClientCache` caches in localStorage for 24h (clear it when testing data changes); Update Data clears it via `clearClientCache`.
 
 ## How we work
 
@@ -75,7 +77,7 @@ Update `PLAN.md` (status, Open/Next, anything stale), append a `HISTORY.md` entr
 
 - Libraries move faster than training data. Check the **installed** version's docs (and Spotify's current Web API docs) before using an API; heed deprecations. If the current docs change a tradeoff, explain it and let B decide.
 - Next 14 here, not 15/16: `params` are sync, `middleware.ts` (not `proxy.ts`), no `"use cache"`. Re-read these notes after any upgrade.
-- API routes that call `getServerSession` are dynamic; cache at the data level only once measured. The in-memory `serverCache` does not survive across serverless instances.
+- API routes that call `getServerSession` are dynamic; cache at the data level only once measured. No in-memory server caches: each serverless instance keeps its own copy and nothing can invalidate them all (one kept the dashboard stale after a sync).
 - Keep global resets inside `@layer base`; an unlayered rule silently beats Tailwind utilities.
 - shadcn/ui for buttons and form controls, restyled to the app's look. Run `git diff` after any shadcn CLI scaffolding (it can rewrite `layout.tsx`).
 - No `window.confirm`/`alert`; use in-app components. Text meets WCAG AA contrast (album-color backgrounds make this easy to break).

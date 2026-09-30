@@ -5,6 +5,12 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
+export function clearClientCache(keyPrefix: string) {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(keyPrefix))
+    .forEach((key) => localStorage.removeItem(key));
+}
+
 export function useClientCache<T>(
   key: string,
   fetchData: () => Promise<T>,

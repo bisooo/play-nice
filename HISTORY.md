@@ -46,3 +46,10 @@ After deploy: `/api/auth/*` 200, `/api/user-insights` 401 signed out, sign-in re
 Checks: `next build` ok locally; no code changes.
 Update: B confirmed production sign-in works after the resume.
 Not verified: `prisma db push` against Atlas; Vercel runtime logs (connector 403 on the team scope).
+
+## 2026-09-30 — Dashboard stale after Update Data, complete and verified
+Bug: on production the dashboard kept showing B's 2024 top items after Update Data. Root cause: two caches that a sync never invalidated. `useClientCache` keeps each dashboard tab in localStorage for 24h (the first dashboard visit after sign-in cached the old 2024 rows), and `/api/user-insights` also held results in an in-memory `serverCache` for 1h per serverless instance. The sync itself worked.
+Fix: Update Data clears the `userInsights_*` localStorage keys on any successful response (`clearClientCache`, `src/hooks/useUpdateUserTopItems.ts`); removed `serverCache` from `/api/user-insights` and deleted `src/lib/serverCache.ts` (per-instance, can't be invalidated). New hard rule 8 in CLAUDE.md.
+Verified via Playwright (scripted, container Chromium) on `next build && next start`, throwaway Mongo, dev login as B: seeded 10 fake "OLD2024" artists/tracks per range with `lastTopItemsUpdate` 2024-10-13, opened the dashboard (old data shown and cached), pressed Update Data ("YOUR DATA HAS BEEN UPDATED!"), DB then had 0 old and 135 real artists. Before the fix the dashboard still showed OLD2024 after update and after reload (reproduced); after the fix it showed the real #1 (TUL8TE, matching the DB's MEDIUM_TERM rank 1). `/api/user-insights` still 401 signed out.
+Checks: typecheck clean, lint 2 pre-existing warnings, build ok.
+Not verified: production. B's browser still holds the cached 2024 data until pressing Update Data once after this deploys. `prisma db push` on Atlas still pending (not needed for this fix).

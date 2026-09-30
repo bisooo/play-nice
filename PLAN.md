@@ -9,7 +9,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Cloud dev login:** `/api/dev/login` + `scripts/spotify-refresh-token.mjs` working and verified end to end with B's real account (2026-09-30): sign-in, sync, dashboard, expiry refresh. Spotify did not rotate the refresh token on 3 refreshes. axios bumped to 1.20 (old one couldn't reach Spotify through the cloud proxy).
 - **Home / currently playing:** works signed in via dev login (nothing was playing, so the album-colour background wasn't exercised).
 - **Profile + top-items sync:** verified via dev login 2026-09-30 (35–50 artists, 50 tracks per range stored).
-- **Dashboard:** verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null.
+- **Dashboard:** verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Update Data now clears the dashboard's 24h localStorage cache and `/api/user-insights` no longer caches in memory (2026-09-30), so a sync shows up straight away.
 - **Sampler (Record Digger, Record Analysis):** dead. `/recommendations`, `/audio-features` and `preview_url` removed for dev-mode apps (2024-11).
 
 ## Data model
@@ -46,6 +46,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] B: run `npx prisma db push` against the real DB (drops the old unique index on `email`; otherwise a second user without email collides).
 - [ ] Not verified: signed-in flows end to end, including token refresh after an hour (needs a working Spotify app + DB).
 - [ ] Move `accessToken` off the client session (hard rule 1).
+- [ ] Not verified: stale-dashboard fix on production (B: press Update Data once after the deploy, then open the dashboard).
+- [ ] Key the dashboard's localStorage cache per user and clear it on sign-out (a second user on the same browser sees the first user's cached data for up to 24h).
 - [ ] Fix the 2 lint warnings (RecordDigger deps, userManager default export).
 
 ## Future ideas

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { clearClientCache } from './useClientCache';
+import { USER_INSIGHTS_CACHE_PREFIX } from './useUserInsights';
 
 interface UpdateResult {
   success: boolean;
@@ -23,6 +25,8 @@ export function useUpdateUserTopItems() {
       }
       
       const data = await response.json();
+      // The dashboard caches insights for 24h; drop them so it reads the new sync
+      clearClientCache(USER_INSIGHTS_CACHE_PREFIX);
       return { success: true, message: data.message };
     } catch (error) {
       console.error('Error updating top items:', error);
