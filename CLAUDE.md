@@ -90,7 +90,7 @@ Update `PLAN.md` (status, Open/Next, anything stale), append a `HISTORY.md` entr
 
 - Commit messages: one line, imperative, under ~60 chars. No body unless genuinely needed.
 - No `Co-Authored-By` or "Generated with Claude Code" trailers.
-- Commits are authored as B (`Basel`, same email as the existing history). Cloud containers default to a Claude identity, so set `git config user.name`/`user.email` before the first commit.
+- Commits are authored as B (`Basel`, same email as the existing history), unsigned. Cloud containers default to Claude's name, email and SSH signing key, which once left Claude listed as a contributor; `.claude/settings.json` runs `scripts/git-identity.sh` at session start to fix that and enable `.githooks/commit-msg`, which strips AI trailers. Run it yourself if `git config user.name` isn't Basel.
 - Push small progressive commits to `main`, rebased on the latest `origin/main`. If pushing `main` deploys (assumed Vercel git integration; confirm in PLAN.md Deployment), don't push until B confirms unless the task brief says to.
 - Parallel sessions use separate worktrees: `npm ci`, copy `.env.local` from the main checkout, use a non-default port.
 

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Strip AI attribution trailers so commits never list Claude as a co-author.
+sed -i -E '/^(Co-authored-by|Claude-Session):/Id; /Generated with \[?Claude Code/Id' "$1"
+# Drop trailing blank lines left behind.
+sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$1"
