@@ -44,4 +44,5 @@ Not verified: album-colour background (nothing playing); album art images in the
 Root cause of the 500: production was still the 2024-10-13 build (`74910ee`); Vercel's GitHub app had lost permissions, so no push since 2024 deployed. Confirmed via the Vercel connector (deployment list) and the live profile chunk still containing the removed `TOKEN:` line. B refreshed the GitHub permissions; pushing `9f325e2` deployed in about a minute.
 After deploy: `/api/auth/*` 200, `/api/user-insights` 401 signed out, sign-in redirects to Spotify and the prod redirect URI is accepted (curl). B's real login then hit `error=Callback`, which next-auth v4 raises when our `jwt` callback throws (Spotify token/profile failures give `OAuthCallback`), i.e. the Atlas upsert. B found the Atlas cluster paused and resumed it.
 Checks: `next build` ok locally; no code changes.
-Not verified: production sign-in after the resume (B to retry); `prisma db push` against Atlas; Vercel runtime logs (connector 403 on the team scope).
+Update: B confirmed production sign-in works after the resume.
+Not verified: `prisma db push` against Atlas; Vercel runtime logs (connector 403 on the team scope).

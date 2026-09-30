@@ -40,7 +40,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] B: confirm the Spotify-app owner account has Premium (required for dev mode since 2026-03).
 - [ ] B: add `http://127.0.0.1:3000/api/auth/callback/spotify` (and the prod URL) as redirect URIs in the Spotify dashboard.
 - [x] B: check the MongoDB Atlas cluster is still alive (was paused; resumed 2026-09-30).
-- [ ] Verify production sign-in end to end on https://play-nice.vercel.app after the Atlas resume (was `error=Callback` = DB write failing).
+- [x] Production sign-in works on https://play-nice.vercel.app (B confirmed 2026-09-30 after the Atlas resume).
 - [ ] B: re-authorise the Vercel connector for the bisooos-projects team (runtime logs, env vars and project settings return 403).
 - [ ] B: decide the Sampler's fate.
 - [ ] B: run `npx prisma db push` against the real DB (drops the old unique index on `email`; otherwise a second user without email collides).
