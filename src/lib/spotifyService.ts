@@ -1,11 +1,10 @@
 import axios from 'axios';
-import { Session } from 'next-auth';
 
 export class SpotifyService {
   private accessToken: string;
 
-  constructor(session: Session) {
-    this.accessToken = session.accessToken!;
+  constructor(accessToken: string) {
+    this.accessToken = accessToken;
   }
 
   private async get(endpoint: string, params?: Record<string, string>) {

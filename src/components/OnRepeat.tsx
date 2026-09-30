@@ -8,25 +8,12 @@ import { TimeRange } from "@prisma/client";
 import TopArtists from "@/components/TopArtists";
 import TopTracks from "@/components/TopTracks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useSession } from "next-auth/react";
-import Login from "@/components/Login";
 
 const TimeRangeContext = createContext<TimeRange>(TimeRange.MEDIUM_TERM);
 
 // Shared by /on-repeat/artists and /on-repeat/tracks, so the time range survives switching between them
 export function OnRepeatLayout({ children }: { children: ReactNode }) {
   const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.MEDIUM_TERM);
-  const { status } = useSession();
-
-  // Signed out, the sync never runs and the lists would spin forever
-  if (status === "unauthenticated") {
-    return (
-      <div className="container mx-auto px-4 pt-32 max-w-xs flex flex-col items-center text-center">
-        <h1 className="text-2xl font-bold">LOG IN TO SEE WHAT&apos;S ON REPEAT</h1>
-        <Login />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 pt-[5.5rem] pb-6 max-w-6xl">

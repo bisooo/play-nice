@@ -10,8 +10,8 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import ColorThief from "colorthief";
 import { NowPlaying } from "@/types/spotify";
 
-// Spotify rate-limits per app over a rolling 30s window; one call per 5s per open tab stays well
-// inside it for a dev-mode app (max 5 users). Hidden tabs don't poll at all.
+// Spotify rate-limits per app over a rolling 30s window. Every visitor polls every 5s, but the
+// route is CDN-cached for 5s, so Spotify sees about one call per 5s. Hidden tabs don't poll at all.
 const POLL_MS = 5000;
 // When a track is about to end, check again just after it does instead of waiting a full interval
 const TRACK_END_SLACK_MS = 1000;
@@ -196,7 +196,7 @@ const CurrentlyPlaying: React.FC<{
                 ) : (
                   <div className="text-center">
                     <h3 className="text-base sm:text-xl font-semibold text-white">No track playing</h3>
-                    <p className="text-sm text-white/80">Start playing a song on Spotify</p>
+                    <p className="text-sm text-white/80">Nothing on right now</p>
                   </div>
                 )}
               </motion.div>

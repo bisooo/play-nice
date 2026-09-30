@@ -6,6 +6,7 @@ export interface UserData {
   name?: string;
   accessToken?: string;
   refreshToken?: string;
+  accessTokenExpires?: Date;
 }
 
 export interface TopArtistData {

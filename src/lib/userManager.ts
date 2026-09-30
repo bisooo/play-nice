@@ -15,6 +15,7 @@ class UserManager {
           name: userData.name,
           accessToken: userData.accessToken,
           refreshToken: userData.refreshToken,
+          accessTokenExpires: userData.accessTokenExpires,
         },
       });
     } catch (error) {
@@ -34,19 +35,9 @@ class UserManager {
     }
   }
 
-  async updateUserTokens(spotifyId: string, accessToken: string, refreshToken: string) {
-    try {
-      return await prisma.user.update({
-        where: { spotifyId: spotifyId },
-        data: { 
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-        },
-      });
-    } catch (error) {
-      console.error('Error updating user tokens:', error);
-      throw error;
-    }
+  // The owner is the account SPOTIFY_REFRESH_TOKEN belongs to (see src/lib/owner.ts)
+  async getUserByRefreshToken(refreshToken: string) {
+    return prisma.user.findFirst({ where: { refreshToken } });
   }
 
   async updateTopArtists(userId: string, artists: TopArtistData[], timeRange: TimeRange) {

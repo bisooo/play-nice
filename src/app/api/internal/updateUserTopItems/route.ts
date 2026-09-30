@@ -1,24 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import UserManager from '../../../../lib/userManager';
-import { authOptions } from '@/lib/authOptions';
+import { handleApiError } from '@/lib/apiUtils';
+import { getOwner } from '@/lib/owner';
 import { UserService } from '@/services/userServices';
 
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-// Called by the client on every signed-in page load; only syncs when data is over 24h old
+// Public: called on every page load; only syncs the owner's top items when they're over 24h old,
+// so repeated calls cost one DB write at most
 export async function POST() {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const user = await UserManager.getUserById(session.id);
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const { user, spotify } = await getOwner();
 
     const now = new Date();
     const claimed = await UserManager.claimTopItemsSync(user.spotifyId, new Date(now.getTime() - SYNC_INTERVAL_MS), now);
@@ -27,7 +19,7 @@ export async function POST() {
     }
 
     try {
-      await UserService.updateUserTopItems(user.id, session);
+      await UserService.updateUserTopItems(user.id, spotify);
     } catch (error) {
       // Release the claim so the next visit retries
       await UserManager.updateLastTopItemsUpdate(user.id, user.lastTopItemsUpdate);
@@ -36,6 +28,6 @@ export async function POST() {
     return NextResponse.json({ updated: true });
   } catch (error) {
     console.error('Error updating top items:', error);
-    return NextResponse.json({ error: 'Failed to update top items' }, { status: 500 });
+    return handleApiError(error);
   }
 }

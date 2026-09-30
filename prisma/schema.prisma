@@ -18,6 +18,7 @@ model User {
   name               String?
   accessToken        String?
   refreshToken       String?
+  accessTokenExpires DateTime?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
   topArtists         TopArtist[]

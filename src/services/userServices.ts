@@ -1,12 +1,10 @@
 import { TimeRange } from '@prisma/client';
-import { Session } from 'next-auth';
 import { SpotifyService } from '../lib/spotifyService';
 import UserManager from '../lib/userManager';
 import { SpotifyArtist, SpotifyTrack } from '@/types/spotify';
 
 export class UserService {
-  static async updateUserTopItems(userId: string, session: Session) {
-    const spotifyService = new SpotifyService(session);
+  static async updateUserTopItems(userId: string, spotifyService: SpotifyService) {
 
     const timeRanges: Array<{ spotifyRange: 'short_term' | 'medium_term' | 'long_term', prismaRange: TimeRange }> = [
       { spotifyRange: 'short_term', prismaRange: TimeRange.SHORT_TERM },

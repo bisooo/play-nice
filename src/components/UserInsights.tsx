@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { useSession } from "next-auth/react";
 import { TimeRange } from "@prisma/client";
 import { UserInsights } from "@/types/user";
 import { useTopItemsSync } from "@/components/TopItemsSync";
@@ -14,34 +13,23 @@ const TIME_RANGES = [
 ];
 
 type InsightsState = {
-  userId: string | null;
   data: Partial<Record<TimeRange, UserInsights>>;
   errors: Partial<Record<TimeRange, Error>>;
 };
 
-const empty = (userId: string | null): InsightsState => ({
-  userId,
-  data: {},
-  errors: {},
-});
-
-const UserInsightsContext = createContext<InsightsState>(empty(null));
+const UserInsightsContext = createContext<InsightsState>({ data: {}, errors: {} });
 
 // Preloads every time range once the page-load sync is done, so On Repeat never waits on a
-// fetch. Memory only (no localStorage): it belongs to one signed-in user and is refetched
-// after every sync, so it can't serve another user's data or hide a fresh sync.
+// fetch. Memory only (no localStorage), fetched after the sync, so it can't hide a fresh one.
 export function UserInsightsProvider({ children }: { children: ReactNode }) {
-  const { data: session } = useSession();
   const syncStatus = useTopItemsSync();
-  const userId = session?.id ?? null;
-  const [state, setState] = useState<InsightsState>(() => empty(userId));
+  const [state, setState] = useState<InsightsState>({ data: {}, errors: {} });
   const requestId = useRef(0);
 
   useEffect(() => {
     const id = ++requestId.current;
-    setState((prev) => (prev.userId === userId ? prev : empty(userId)));
     // Wait for the page-load sync so stale lists never flash before fresh ones
-    if (!userId || syncStatus !== "done") return;
+    if (syncStatus !== "done") return;
 
     TIME_RANGES.forEach(async (timeRange) => {
       try {
@@ -65,7 +53,7 @@ export function UserInsightsProvider({ children }: { children: ReactNode }) {
           }));
       }
     });
-  }, [userId, syncStatus]);
+  }, [syncStatus]);
 
   return (
     <UserInsightsContext.Provider value={state}>

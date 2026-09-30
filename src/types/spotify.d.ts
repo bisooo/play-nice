@@ -1,9 +1,6 @@
-import { Profile } from "next-auth";
-
-export interface SpotifyProfile extends Profile {
+export interface SpotifyProfile {
   id: string;
   display_name: string | null;
-  email: string;
   images: { url: string; height: number | null; width: number | null }[];
 }
 

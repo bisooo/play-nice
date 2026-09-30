@@ -3,9 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import localFont from "next/font/local";
 import React from "react";
-import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { login } from "./Login";
 
 const logoFont = localFont({ src: "../../public/font-style.ttf" });
 
@@ -15,7 +13,6 @@ const ON_REPEAT_LINKS = [
 ];
 
 const Navbar: React.FC = () => {
-  const { data: session, status } = useSession();
   const pathname = usePathname();
 
   const navClasses =
@@ -35,46 +32,23 @@ const Navbar: React.FC = () => {
         />
       </Link>
 
-      {/* Middle Section: Links (Artists / Tracks On Repeat), or login when signed out; empty while loading */}
+      {/* Middle Section: Links (Artists / Tracks On Repeat) */}
       <div className="flex flex-grow items-center justify-center space-x-6 md:space-x-24 px-3">
-        {status === "unauthenticated" && (
-          <button
-            type="button"
-            onClick={login}
-            className={`${logoFont.className} nav-link text-center text-xs sm:text-base`}
+        {ON_REPEAT_LINKS.map(({ href, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`${logoFont.className} nav-link text-center text-xs sm:text-base ${
+              pathname === href ? "active" : ""
+            }`}
           >
-            LOGIN WITH SPOTIFY
-          </button>
-        )}
-        {status === "authenticated" &&
-          ON_REPEAT_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`${logoFont.className} nav-link text-center text-xs sm:text-base ${
-                pathname === href ? "active" : ""
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+            {label}
+          </Link>
+        ))}
       </div>
 
-      {/* Right Section: Profile Image */}
-      <div className="flex-none flex items-center">
-        <Link href="/profile">
-          <div className="relative">
-            <Image
-              src={session?.image ?? "/placeholder.jpg"}
-              alt="User Profile"
-              width={50}
-              height={50}
-              className="rounded-full"
-              unoptimized={true}
-            />
-          </div>
-        </Link>
-      </div>
+      {/* Right Section: empty, the logo's width, so the links stay centred */}
+      <div className="flex-none w-[50px]" aria-hidden="true" />
     </nav>
   );
 };

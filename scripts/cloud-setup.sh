@@ -28,4 +28,4 @@ done
 
 [ -d node_modules ] || npm ci
 npx prisma db push --skip-generate
-echo "Ready: npm run dev (or build + start), then open http://127.0.0.1:3000/api/dev/login"
+echo "Ready: npm run dev (or build + start) and open http://127.0.0.1:3000 (needs SPOTIFY_REFRESH_TOKEN)"

@@ -1,5 +1,5 @@
 // One-off: sign in with Spotify on your own machine and print a refresh token
-// for DEV_SPOTIFY_REFRESH_TOKEN (used by /api/dev/login in cloud sessions).
+// for SPOTIFY_REFRESH_TOKEN: the account whose listening the app shows (src/lib/owner.ts).
 //
 //   node scripts/spotify-refresh-token.mjs
 //
@@ -13,7 +13,6 @@ import { readFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { exec } from 'node:child_process';
 
-// Keep in sync with SPOTIFY_SCOPES in src/lib/authOptions.ts
 const SCOPES = 'user-read-email user-read-currently-playing user-library-read user-top-read';
 const REDIRECT_URI = 'http://127.0.0.1:3000/api/auth/callback/spotify';
 
@@ -73,8 +72,8 @@ const server = createServer(async (req, res) => {
     process.exitCode = 1;
   } else {
     res.writeHead(200).end('Done. The refresh token is in your terminal; you can close this tab.');
-    console.log('\nDEV_SPOTIFY_REFRESH_TOKEN=' + body.refresh_token + '\n');
-    console.log('Add that line to the cloud environment\'s env vars. Valid for 6 months.');
+    console.log('\nSPOTIFY_REFRESH_TOKEN=' + body.refresh_token + '\n');
+    console.log('Set it in Vercel (then redeploy) and in the cloud environment\'s env vars. Valid for 6 months.');
   }
   server.close();
 });

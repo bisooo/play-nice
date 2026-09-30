@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
+import { OwnerNotConfiguredError } from '@/lib/owner';
 
 export function handleApiError(error: unknown) {
+  if (error instanceof OwnerNotConfiguredError) {
+    console.error(error.message);
+    return NextResponse.json({ error: 'Not configured', message: 'This app isn\'t connected to Spotify yet.' }, { status: 503 });
+  }
   if (error instanceof Error) {
     if (error.message.includes('429')) {
       // Extract retry-after value if available

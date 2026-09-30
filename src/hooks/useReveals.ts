@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { TimeRange } from '@prisma/client';
 
 // "new" = entered the top 10 since the deck started; a number = places moved up (negative = down)
@@ -7,18 +6,17 @@ export type Move = 'new' | number | null;
 type Card = { rank: number; revealed: boolean; move: Move };
 type Deck = Record<string, Card>;
 
-// One saved deck per user, list and time range. A card is face-down until revealed at its
+// One saved deck per visitor (in their browser), list and time range. A card is face-down until revealed at its
 // current rank, so after a sync a new entry or a rank change turns it face-down again.
 export function useReveals(kind: 'artists' | 'tracks', timeRange: TimeRange, ids?: string[]) {
-  const { data: session } = useSession();
-  const storageKey = session?.id ? `onRepeatReveals:${session.id}:${kind}:${timeRange}` : null;
+  const storageKey = `onRepeatReveals:${kind}:${timeRange}`;
   const [deck, setDeck] = useState<Deck | null>(null);
   const idsKey = ids?.join(',');
 
   const save = useCallback(
     (next: Deck) => {
       try {
-        if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch {
         // Storage full or blocked: reveals still show for this visit
       }
@@ -29,7 +27,7 @@ export function useReveals(kind: 'artists' | 'tracks', timeRange: TimeRange, ids
   // Loaded after mount (not as initial state) so saved reveals animate their flip
   useEffect(() => {
     setDeck(null);
-    if (!storageKey || !idsKey) return;
+    if (!idsKey) return;
     let stored: Deck | null = null;
     try {
       stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
