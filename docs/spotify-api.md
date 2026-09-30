@@ -1,11 +1,12 @@
 # Spotify Web API: what PLAY-NICE can use
 
-The app runs in **Development Mode** (extended quota is only for organizations). Last checked 2026-09-29. Update this file whenever Spotify changes something or we start using a new endpoint.
+The app runs in **Development Mode**. Extended quota (unlimited users) is out of reach: since 2025-05-15 it needs a registered business, a launched service with **at least 250k monthly active users**, commercial viability, and an application from a company email; review takes up to six weeks (https://developer.spotify.com/documentation/web-api/concepts/quota-modes, checked 2026-09-30). Last checked 2026-09-30. Update this file whenever Spotify changes something or we start using a new endpoint.
 
 ## Dev-mode constraints
 
 - App owner needs an active **Premium** subscription (since 2026-03-09).
-- Max **5 users**, each allow-listed in the Spotify dashboard.
+- Max **5 users** per Client ID, each allow-listed in the Spotify dashboard (User Management, by the user's Spotify email). The dashboard refuses a 6th: "You have reached the maximum of 5 users in development mode."
+- One Development Mode Client ID per developer (since 2026-02-11 for new apps, 2026-03-09 for existing), so a second app for more users isn't allowed (https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security).
 - Redirect URIs: no `localhost`. Use `http://127.0.0.1:<port>/...` locally; HTTPS everywhere else.
 - Token endpoint returns `expires_in` (seconds) and may return a new `refresh_token`; persist it.
 - Refresh tokens expire **6 months after the user authorizes**; refreshing does not extend them (https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens, checked 2026-09-29). Users must sign in again after that.

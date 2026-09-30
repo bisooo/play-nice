@@ -36,6 +36,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Open/Next
 
+- [ ] B: pick how people beyond the 5-user cap use the app (researched 2026-09-30). Spotify's extended quota needs a registered business with 250k+ monthly users, so this app can't qualify. Options: (a) manage the allowlist of 5 (B + 4), removing someone to free a slot (inferred, not confirmed by Spotify docs); (b) a "not on the list" screen plus a demo mode with sample data for everyone else (recommended, together with a); (c) Last.fm as a second login for real stats without a cap (users must scrobble to Last.fm; not checked, last.fm is blocked from cloud sessions).
+
 - [x] B: run `node scripts/spotify-refresh-token.mjs` locally and add the printed `DEV_SPOTIFY_REFRESH_TOKEN` to the cloud environment's env vars (done 2026-09-30; redo ~2027-03).
 - [x] Verify cloud dev login end to end with the real token (done 2026-09-30; see HISTORY.md).
 - [ ] Not verified: the album-colour background with a real playing track (checked 2026-09-30 with a mocked track + cover in Playwright; needs a track playing on B's account, and container Chromium can't load i.scdn.co).
