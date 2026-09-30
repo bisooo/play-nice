@@ -41,8 +41,8 @@ Copy `.env.example` to `.env.local`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET
 - Auth: NextAuth v4, Spotify provider, JWT sessions. `src/lib/authOptions.ts`, refresh in `src/lib/spotifyTokenManager.ts`.
 - Spotify: `src/lib/spotifyService.ts`, called from `src/app/api/spotify/*`. Errors mapped by `handleApiError` (`src/lib/apiUtils.ts`) so 401/429 surface correctly.
 - DB: Prisma on MongoDB (`prisma/schema.prisma`): `User`, `TopArtist`, `TopTrack`. All access through `src/lib/userManager.ts`. Race safety comes from `@@unique` constraints, not app checks. Prisma transactions need a replica set (Atlas has one; local Mongo must run as a single-node replica set).
-- Top-items sync: `POST /api/internal/updateUserTopItems` (once / 24h per user) → `src/services/userServices.ts`; read back via `GET /api/user-insights`.
-- Client hooks in `src/hooks`; `useClientCache` caches in localStorage for 24h (clear it when testing data changes); Update Data clears it via `clearClientCache`.
+- Top-items sync: automatic. `TopItemsSyncProvider` (`src/components/TopItemsSync.tsx`) calls `POST /api/internal/updateUserTopItems` on each signed-in page load; the server syncs only if `lastTopItemsUpdate` is over 24h old → `src/services/userServices.ts`. Dashboard waits for it, then reads `GET /api/user-insights` (no client cache).
+- Client hooks in `src/hooks`.
 
 ## How we work
 

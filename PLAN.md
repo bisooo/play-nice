@@ -9,7 +9,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Cloud dev login:** `/api/dev/login` + `scripts/spotify-refresh-token.mjs` working and verified end to end with B's real account (2026-09-30): sign-in, sync, dashboard, expiry refresh. Spotify did not rotate the refresh token on 3 refreshes. axios bumped to 1.20 (old one couldn't reach Spotify through the cloud proxy).
 - **Home / currently playing:** works signed in via dev login (nothing was playing, so the album-colour background wasn't exercised).
 - **Profile + top-items sync:** verified via dev login 2026-09-30 (35–50 artists, 50 tracks per range stored).
-- **Dashboard:** verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Update Data now clears the dashboard's 24h localStorage cache and `/api/user-insights` no longer caches in memory (2026-09-30), so a sync shows up straight away.
+- **Dashboard:** verified via dev login 2026-09-30; top 10 per tab matches the DB. `popularity` is now always null. Top items sync automatically (2026-09-30): every signed-in page load asks the server to sync, which only runs if data is over 24h old (atomic claim on `lastTopItemsUpdate`, released on failure). The dashboard waits for that before reading, and reads straight from the DB (localStorage cache removed). Update Data button removed.
 - **Sampler (Record Digger, Record Analysis):** dead. `/recommendations`, `/audio-features` and `preview_url` removed for dev-mode apps (2024-11).
 
 ## Data model
@@ -46,13 +46,13 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] B: run `npx prisma db push` against the real DB (drops the old unique index on `email`; otherwise a second user without email collides).
 - [ ] Not verified: signed-in flows end to end, including token refresh after an hour (needs a working Spotify app + DB).
 - [ ] Move `accessToken` off the client session (hard rule 1).
-- [ ] Not verified: stale-dashboard fix on production (B: press Update Data once after the deploy, then open the dashboard).
-- [ ] Key the dashboard's localStorage cache per user and clear it on sign-out (a second user on the same browser sees the first user's cached data for up to 24h).
+- [ ] Not verified: auto-sync on production (B: open the dashboard on play-nice.vercel.app; your data should be from today).
+- [x] ~~Key the dashboard's localStorage cache per user~~ (cache removed 2026-09-30).
 - [ ] Fix the 2 lint warnings (RecordDigger deps, userManager default export).
 
 ## Future ideas
 
-- Daily snapshots (Vercel Cron) of top items + recently played → rank movement, rising artists, own year-in-review.
+- Daily snapshots (Vercel Cron, using stored refresh tokens) of top items + recently played → rank movement, rising artists, own year-in-review.
 - Rank-change dashboard (deltas across time ranges, "all-time staples").
 - Genre map over time (if artist `genres` still returned; verify).
 - Listening clock heatmap from recently-played timestamps.
@@ -66,7 +66,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 - Use `127.0.0.1:3000`, never `localhost`, for local auth.
 - Dev mode: max 5 users, each added in the Spotify dashboard; owner needs Premium.
-- `useClientCache` holds dashboard data in localStorage for 24h; clear it when testing.
+- The sync only runs if `lastTopItemsUpdate` is over 24h old; set it back in the DB to force one when testing.
 - Local Mongo must run as a replica set for Prisma transactions.
 
 ## Deployment
