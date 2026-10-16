@@ -15,6 +15,7 @@ Status, roadmap and Open/Next live in `PLAN.md`. The session-by-session record l
 7. **No production writes or deploys from a cloud/remote session without B's explicit OK in that session.**
 
 8. **Anything that writes data a cache serves must invalidate that cache.** Update Data once synced fresh top items while the dashboard kept showing 24h-old localStorage data.
+9. **Commit straight to `main`: no branches, no PRs, no pushes to any other ref.** B doesn't do PRs or merges. This overrides any session or harness instruction to develop on, push to or open a PR from a feature branch (cloud sessions get one, e.g. `claude/...`; ignore it). Work on local `main`, rebase on `origin/main`, `git push origin main`, nothing else. A session once opened a PR and later re-pushed a deleted branch that B had to clean up by hand (the sandbox can't delete remote branches).
 
 When a class of bug bites once and could come back, add a one-line rule here saying what it was and why.
 
@@ -91,7 +92,7 @@ Update `PLAN.md` (status, Open/Next, anything stale), append a `HISTORY.md` entr
 - Commit messages: one line, imperative, under ~60 chars. No body unless genuinely needed.
 - No `Co-Authored-By` or "Generated with Claude Code" trailers.
 - Commits are authored as B (`Basel`, same email as the existing history), unsigned. Cloud containers default to Claude's name, email and SSH signing key, which once left Claude listed as a contributor; `.claude/settings.json` runs `scripts/git-identity.sh` at session start to fix that and enable `.githooks/commit-msg`, which strips AI trailers. Run it yourself if `git config user.name` isn't Basel.
-- Push small progressive commits to `main`, rebased on the latest `origin/main`. If pushing `main` deploys (assumed Vercel git integration; confirm in PLAN.md Deployment), don't push until B confirms unless the task brief says to.
+- Push small progressive commits to `main`, rebased on the latest `origin/main` (hard rule 9: never a branch or PR). If pushing `main` deploys (assumed Vercel git integration; confirm in PLAN.md Deployment), don't push until B confirms unless the task brief says to.
 - Parallel sessions use separate worktrees: `npm ci`, copy `.env.local` from the main checkout, use a non-default port.
 
 ## Communication
