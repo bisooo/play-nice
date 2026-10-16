@@ -63,6 +63,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Future ideas
 
+- (B, 2026-10-16) Others onboard themselves: an easy way to mint their own refresh token and request their Spotify extended history export, then an all-time stats dashboard once it arrives. Blocked by dev mode's 5-user cap (allow-list by email, no API); build it for B first.
+
 - Rank-change dashboard (deltas across time ranges, "all-time staples").
 - Genre map over time (if artist `genres` still returned; verify).
 - Listening clock heatmap from recently-played timestamps.
