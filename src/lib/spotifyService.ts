@@ -51,4 +51,8 @@ export class SpotifyService {
   public async getTopTracks(timeRange: 'short_term' | 'medium_term' | 'long_term', limit: number = 50) {
     return this.get('me/top/tracks', { time_range: timeRange, limit: limit.toString() });
   }
+
+  public async getRecentlyPlayed(limit: number = 50) {
+    return this.get('me/player/recently-played', { limit: limit.toString() });
+  }
 }

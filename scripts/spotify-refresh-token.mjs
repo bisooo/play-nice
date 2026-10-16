@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { exec } from 'node:child_process';
 
-const SCOPES = 'user-read-email user-read-currently-playing user-library-read user-top-read';
+const SCOPES = 'user-read-email user-read-currently-playing user-read-recently-played user-library-read user-top-read';
 const REDIRECT_URI = 'http://127.0.0.1:3000/api/auth/callback/spotify';
 
 try {

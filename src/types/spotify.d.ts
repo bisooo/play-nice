@@ -22,12 +22,15 @@ export interface SpotifyTrack {
   id: string;
   name: string;
   artists: Array<{
+    id: string;
     name: string;
   }>;
   album: {
+    id: string;
     name: string;
     images: SpotifyImage[];
   };
+  duration_ms: number;
   popularity: number;
 }
 
@@ -50,6 +53,16 @@ export interface SpotifyTopTracksResponse {
   next: string | null;
   previous: string | null;
 }
+// GET /me/player/recently-played: the last 50 plays at most, newest first.
+// Local files come back with a null track id.
+export interface SpotifyRecentlyPlayedResponse {
+  items: Array<{
+    track: SpotifyTrack;
+    played_at: string;
+    context: { type: string; uri: string } | null;
+  }>;
+}
+
 // Trimmed GET /me/player/currently-playing, as served by /api/spotify/current-track
 export interface NowPlaying {
   isPlaying: boolean;

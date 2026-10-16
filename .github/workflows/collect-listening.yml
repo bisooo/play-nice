@@ -1,0 +1,18 @@
+# Hourly: saves new plays (Spotify only keeps the last 50) and the daily top-items snapshot.
+# Needs the repo secret CRON_SECRET, matching CRON_SECRET in Vercel.
+name: Collect listening
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          curl -fsS --max-time 60 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://play-nice.vercel.app/api/internal/collect

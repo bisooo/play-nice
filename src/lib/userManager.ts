@@ -1,4 +1,4 @@
-import { TopArtistData, TopTrackData, UserData } from '@/types/user';
+import { PlayData, SnapshotArtistData, SnapshotTrackData, TopArtistData, TopTrackData, UserData } from '@/types/user';
 import { prisma } from './prisma';
 import { TimeRange } from '@prisma/client';
 
@@ -40,7 +40,8 @@ class UserManager {
     return prisma.user.findFirst({ where: { refreshToken } });
   }
 
-  async updateTopArtists(userId: string, artists: TopArtistData[], timeRange: TimeRange) {
+  // Replaces the current list and appends it to history in one transaction
+  async updateTopArtists(userId: string, artists: TopArtistData[], snapshot: SnapshotArtistData[], timeRange: TimeRange, capturedAt: Date) {
     try {
       await prisma.$transaction(async (prisma) => {
         // Delete existing top artists for this user and time range
@@ -55,6 +56,10 @@ class UserManager {
             userId,
           })),
         });
+
+        await prisma.topArtistSnapshot.create({
+          data: { userId, timeRange, capturedAt, items: snapshot },
+        });
       });
     } catch (error) {
       console.error('Error updating top artists:', error);
@@ -62,7 +67,7 @@ class UserManager {
     }
   }
 
-  async updateTopTracks(userId: string, tracks: TopTrackData[], timeRange: TimeRange) {
+  async updateTopTracks(userId: string, tracks: TopTrackData[], snapshot: SnapshotTrackData[], timeRange: TimeRange, capturedAt: Date) {
     try {
       await prisma.$transaction(async (prisma) => {
         // Delete existing top tracks for this user and time range
@@ -76,6 +81,10 @@ class UserManager {
             ...track,
             userId,
           })),
+        });
+
+        await prisma.topTrackSnapshot.create({
+          data: { userId, timeRange, capturedAt, items: snapshot },
         });
       });
     } catch (error) {
@@ -110,6 +119,26 @@ class UserManager {
     } catch (error) {
       console.error('Error updating last top items update time:', error);
       throw error;
+    }
+  }
+
+  async getLatestPlayedAt(userId: string) {
+    const latest = await prisma.play.findFirst({
+      where: { userId },
+      orderBy: { playedAt: 'desc' },
+      select: { playedAt: true },
+    });
+    return latest?.playedAt ?? null;
+  }
+
+  // Upserts on (userId, playedAt) so overlapping or concurrent polls never duplicate a play
+  async addPlays(userId: string, plays: PlayData[]) {
+    for (const play of plays) {
+      await prisma.play.upsert({
+        where: { userId_playedAt: { userId, playedAt: play.playedAt } },
+        update: {},
+        create: { ...play, userId },
+      });
     }
   }
 

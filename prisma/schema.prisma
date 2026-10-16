@@ -63,6 +63,79 @@ model TopTrack {
   @@index([userId, timeRange])
 }
 
+// History: append-only, never rewritten. TopArtist/TopTrack above hold only the latest
+// lists; these keep every sync's lists and every play so stats can look back in time.
+
+// One document per sync and time range: the top artists exactly as Spotify ranked them then
+model TopArtistSnapshot {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String           @db.ObjectId
+  timeRange  TimeRange
+  capturedAt DateTime
+  items      SnapshotArtist[]
+
+  @@unique([userId, timeRange, capturedAt])
+  @@index([userId, capturedAt])
+}
+
+type SnapshotArtist {
+  spotifyId String
+  name      String
+  imageUrl  String?
+  genres    String[]
+  rank      Int
+}
+
+model TopTrackSnapshot {
+  id         String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String          @db.ObjectId
+  timeRange  TimeRange
+  capturedAt DateTime
+  items      SnapshotTrack[]
+
+  @@unique([userId, timeRange, capturedAt])
+  @@index([userId, capturedAt])
+}
+
+type SnapshotTrack {
+  spotifyId String
+  name      String
+  artists   PlayArtist[]
+  albumName String?
+  imageUrl  String?
+  rank      Int
+}
+
+// One document per play. playedAt is when the track finished (Spotify's played_at).
+model Play {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String       @db.ObjectId
+  playedAt    DateTime
+  trackId     String
+  trackName   String
+  artists     PlayArtist[]
+  albumId     String?
+  albumName   String?
+  imageUrl    String?
+  durationMs  Int?
+  contextType String?
+  contextUri  String?
+  source      PlaySource
+
+  @@unique([userId, playedAt])
+  @@index([userId, trackId])
+}
+
+type PlayArtist {
+  spotifyId String
+  name      String
+}
+
+enum PlaySource {
+  RECENTLY_PLAYED
+  EXPORT
+}
+
 enum TimeRange {
   SHORT_TERM
   MEDIUM_TERM
