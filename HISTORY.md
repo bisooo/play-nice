@@ -130,3 +130,10 @@ Verified via curl on `next build && next start` with B's token and throwaway Mon
 Checks: typecheck clean, lint 1 pre-existing warning, build ok.
 Not verified: real recently-played data (needs the re-minted token); the schedule itself (runs only from `main` once merged and `CRON_SECRET` is set).
 
+## 2026-10-16 — Listening history live in production, complete and verified
+B re-minted the token, set `CRON_SECRET` in Vercel and GitHub, and pushed the prod indexes (`db push` also dropped the stale `User_email_key`). B chose: no PRs or branches, commit straight to `main`.
+Bug found and fixed: the first real run hit Vercel Hobby's 10s function limit (504) after ~22 of 50 plays, because each play was a sequential upsert (~3 Atlas round trips, ~280ms each) and plays were inserted newest first, so a cut-off run would have left older plays permanently skipped by the "newer than latest" filter. Confirmed from Vercel runtime logs ("Task timed out after 10 seconds"). Now: one `createMany` of plays not already stored (lookup by playedAt), upsert fallback on P2002, `maxDuration = 60` on the collect route.
+Verified: throwaway DB with a stubbed response (gap of 30 filled in 19ms, repeat adds 0, two concurrent polls give 51 distinct plays); then in production via a manual "Collect listening" run: green in ~2s, `{"topItemsSynced":false,"plays":{"fetched":50,"added":28}}` (the 28 the timed-out run missed).
+Checks: typecheck clean, lint 1 pre-existing warning, build ok.
+Not verified: the hourly schedule firing on its own.
+
