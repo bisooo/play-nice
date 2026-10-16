@@ -14,9 +14,11 @@ Lean status doc; full history is in HISTORY.md.
 - **Card reveals (gamified 2026-09-30):** saved in localStorage per user, list and time range (`src/hooks/useReveals.ts`). A card is face-down until revealed (hover, click or tap) at its current rank; after a sync, new entries and rank changes go face-down again and show NEW / ↑n / ↓n once flipped. The first visit to a deck is the baseline (no badges). Reveals don't follow you across devices (DB storage is a future idea).
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
+- **Listening history (2026-10-16, branch, not deployed):** the sync used to replace each list, so nothing older than the last sync was kept. Now each sync also appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played and keeps the daily snapshot going on quiet days. The existing On Repeat pages are unchanged. No stats UI yet: next step is importing B's Spotify extended streaming history, then ideating stats ("your top artist every November").
+
 ## Data model
 
-MongoDB via Prisma. `User` (spotifyId unique, email, name, accessToken, refreshToken, lastTopItemsUpdate) → `TopArtist` / `TopTrack` (spotifyId, name, imageUrl, popularity, genres/artistName/albumName, timeRange SHORT/MEDIUM/LONG, rank), unique on `(userId, spotifyId, timeRange)`. Sync replaces a user's items per time range in a transaction.
+MongoDB via Prisma. `User` (spotifyId unique, email, name, accessToken, refreshToken, lastTopItemsUpdate) → `TopArtist` / `TopTrack` (spotifyId, name, imageUrl, popularity, genres/artistName/albumName, timeRange SHORT/MEDIUM/LONG, rank), unique on `(userId, spotifyId, timeRange)`. Sync replaces a user's items per time range in a transaction, and in the same transaction appends `TopArtistSnapshot` / `TopTrackSnapshot` (userId, timeRange, capturedAt, embedded items with rank; unique on userId+timeRange+capturedAt). `Play` (userId, playedAt, track, all artists, album, durationMs, context, source RECENTLY_PLAYED/EXPORT), unique on (userId, playedAt), upserted so overlapping polls never duplicate.
 
 ## Access control summary
 
@@ -54,9 +56,13 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] ~~Key the dashboard's localStorage cache per user~~ (cache removed 2026-09-30).
 - [ ] Fix the lint warning (userManager default export).
 
+- [ ] B, to start collecting history: (1) rerun `node scripts/spotify-refresh-token.mjs` (now asks for `user-read-recently-played`) and update `SPOTIFY_REFRESH_TOKEN` in Vercel and the cloud env; (2) set `CRON_SECRET` (`openssl rand -hex 32`) in Vercel and as a GitHub repo secret; (3) merge the history PR so the schedule runs (GitHub only runs schedules from the default branch) and deploy. Until (1) the collector returns 500 on the plays step, though snapshots still save.
+- [ ] B: when Spotify's extended streaming history export arrives, upload it here; import it into `Play` (`source: EXPORT`), deduping against API plays (export `ts` has second precision, API `played_at` has ms).
+- [ ] Not verified: recently played with real data (cloud token lacks the scope; verified with a stubbed response against the throwaway DB). The GitHub Actions schedule (runs only from `main`). GitHub pauses schedules after 60 days without repo activity on public repos; re-enable in the Actions tab if it stops.
+- [ ] Ideate history stats and UI once the export is imported.
+
 ## Future ideas
 
-- Daily snapshots (Vercel Cron, using stored refresh tokens) of top items + recently played → rank movement, rising artists, own year-in-review.
 - Rank-change dashboard (deltas across time ranges, "all-time staples").
 - Genre map over time (if artist `genres` still returned; verify).
 - Listening clock heatmap from recently-played timestamps.
@@ -76,7 +82,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 ## Deployment
 
-Vercel project `play-nice` (team bisooos-projects), https://play-nice.vercel.app. Pushing `main` deploys to production (Git link repaired 2026-09-30; nothing had deployed since 2024-10-13). Git flow: B chose pushing straight to `main` (2026-09-29). Env vars needed there: the five in `.env.example`.
+Vercel project `play-nice` (team bisooos-projects), https://play-nice.vercel.app. Pushing `main` deploys to production (Git link repaired 2026-09-30; nothing had deployed since 2024-10-13). Git flow: B chose pushing straight to `main` (2026-09-29). Env vars needed there: the ones in `.env.example` (`CRON_SECRET` added 2026-10-16).
 
 ## Verification plan
 
