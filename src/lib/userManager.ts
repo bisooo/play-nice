@@ -1,6 +1,6 @@
 import { PlayData, SnapshotArtistData, SnapshotTrackData, TopArtistData, TopTrackData, UserData } from '@/types/user';
 import { prisma } from './prisma';
-import { TimeRange } from '@prisma/client';
+import { Prisma, TimeRange } from '@prisma/client';
 
 class UserManager {
   async upsertUser(userData: UserData) {
@@ -122,23 +122,31 @@ class UserManager {
     }
   }
 
-  async getLatestPlayedAt(userId: string) {
-    const latest = await prisma.play.findFirst({
-      where: { userId },
-      orderBy: { playedAt: 'desc' },
+  // playedAt values of these plays that are already stored
+  async getStoredPlayTimes(userId: string, playedAt: Date[]) {
+    const stored = await prisma.play.findMany({
+      where: { userId, playedAt: { in: playedAt } },
       select: { playedAt: true },
     });
-    return latest?.playedAt ?? null;
+    return new Set(stored.map(play => play.playedAt.getTime()));
   }
 
-  // Upserts on (userId, playedAt) so overlapping or concurrent polls never duplicate a play
+  // One batch insert (a Vercel Hobby function gets 10s; 50 upserts took ~14s). If a concurrent
+  // poll inserted some first, the unique (userId, playedAt) rejects the batch and we fall back
+  // to upserts, which skip what's already there.
   async addPlays(userId: string, plays: PlayData[]) {
-    for (const play of plays) {
-      await prisma.play.upsert({
-        where: { userId_playedAt: { userId, playedAt: play.playedAt } },
-        update: {},
-        create: { ...play, userId },
-      });
+    if (plays.length === 0) return;
+    try {
+      await prisma.play.createMany({ data: plays.map(play => ({ ...play, userId })) });
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) throw error;
+      for (const play of plays) {
+        await prisma.play.upsert({
+          where: { userId_playedAt: { userId, playedAt: play.playedAt } },
+          update: {},
+          create: { ...play, userId },
+        });
+      }
     }
   }
 

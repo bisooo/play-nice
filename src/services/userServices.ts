@@ -38,11 +38,11 @@ export class UserService {
     }
   }
 
-  // Saves plays newer than the latest one stored. Spotify only returns the last 50,
-  // so anything played between polls beyond that is lost; poll at least every couple of hours.
+  // Saves any of the last 50 plays not stored yet (not just ones newer than the latest stored,
+  // so a run cut off midway is filled in by the next). Spotify only returns the last 50, so
+  // anything beyond that between polls is lost; poll at least every couple of hours.
   static async recordRecentPlays(userId: string, spotifyService: SpotifyService) {
     const recent: SpotifyRecentlyPlayedResponse = await spotifyService.getRecentlyPlayed();
-    const latest = await UserManager.getLatestPlayedAt(userId);
 
     const plays: PlayData[] = recent.items
       .filter(item => item.track?.id)
@@ -58,11 +58,13 @@ export class UserService {
         contextType: item.context?.type,
         contextUri: item.context?.uri,
         source: PlaySource.RECENTLY_PLAYED,
-      }))
-      .filter(play => !latest || play.playedAt > latest);
+      }));
 
-    await UserManager.addPlays(userId, plays);
-    return { fetched: recent.items.length, added: plays.length };
+    const stored = await UserManager.getStoredPlayTimes(userId, plays.map(play => play.playedAt));
+    const newPlays = plays.filter(play => !stored.has(play.playedAt.getTime()));
+
+    await UserManager.addPlays(userId, newPlays);
+    return { fetched: recent.items.length, added: newPlays.length };
   }
 
   private static async updateTopArtists(userId: string, spotifyService: SpotifyService, spotifyRange: 'short_term' | 'medium_term' | 'long_term', prismaRange: TimeRange, capturedAt: Date) {
