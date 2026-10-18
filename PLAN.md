@@ -14,11 +14,11 @@ Lean status doc; full history is in HISTORY.md.
 - **Card reveals (gamified 2026-09-30):** saved in localStorage per user, list and time range (`src/hooks/useReveals.ts`). A card is face-down until revealed (hover, click or tap) at its current rank; after a sync, new entries and rank changes go face-down again and show NEW / ↑n / ↓n once flipped. The first visit to a deck is the baseline (no badges). Reveals don't follow you across devices (DB storage is a future idea).
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
-- **Listening history (2026-10-16, live):** the sync used to replace each list, so nothing older than the last sync was kept. Now each sync also appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played and keeps the daily snapshot going on quiet days. The existing On Repeat pages are unchanged. No stats UI yet: next step is importing B's Spotify extended streaming history, then ideating stats ("your top artist every November").
+- **Listening history (2026-10-16, live; reshaped 2026-10-18):** each top-items sync appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played. Plays now point at a catalog (`Track`/`Artist`/`Album`) instead of copying track details, and B's extended streaming history export (2015-10-16 → 2026-10-16, 80.8k music plays) imports with `npm run history:import -- <zip>`; verified on a throwaway DB, **not yet run on production** (B runs it, see Open/Next). Data model and stats rules: `docs/data-model.md`. No stats UI yet.
 
 ## Data model
 
-MongoDB via Prisma. `User` (spotifyId unique, email, name, accessToken, refreshToken, lastTopItemsUpdate) → `TopArtist` / `TopTrack` (spotifyId, name, imageUrl, popularity, genres/artistName/albumName, timeRange SHORT/MEDIUM/LONG, rank), unique on `(userId, spotifyId, timeRange)`. Sync replaces a user's items per time range in a transaction, and in the same transaction appends `TopArtistSnapshot` / `TopTrackSnapshot` (userId, timeRange, capturedAt, embedded items with rank; unique on userId+timeRange+capturedAt). `Play` (userId, playedAt, track, all artists, album, durationMs, context, source RECENTLY_PLAYED/EXPORT), unique on (userId, playedAt), upserted so overlapping polls never duplicate.
+MongoDB via Prisma. `User` (spotifyId unique, email, name, accessToken, refreshToken, lastTopItemsUpdate) → `TopArtist` / `TopTrack` (spotifyId, name, imageUrl, popularity, genres/artistName/albumName, timeRange SHORT/MEDIUM/LONG, rank), unique on `(userId, spotifyId, timeRange)`. Sync replaces a user's items per time range in a transaction, and in the same transaction appends `TopArtistSnapshot` / `TopTrackSnapshot` (userId, timeRange, capturedAt, embedded items with rank; unique on userId+timeRange+capturedAt). `Play` (userId, playedAt, trackId, msPlayed (+ estimated flag), context or country, source RECENTLY_PLAYED/EXPORT), unique on (userId, playedAt, trackId) → catalog `Track` (artistIds, albumId, durationMs) / `Artist` (image, genres) / `Album`, keyed by Spotify id. Details: `docs/data-model.md`.
 
 ## Access control summary
 
@@ -57,9 +57,10 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] Fix the lint warning (userManager default export).
 
 - [x] History collection live (2026-10-16): token re-minted with `user-read-recently-played`, `CRON_SECRET` set in Vercel + GitHub, prod indexes pushed. First manual "Collect listening" run green: 50 plays stored.
-- [ ] B: when Spotify's extended streaming history export arrives, upload it here; import it into `Play` (`source: EXPORT`), deduping against API plays (export `ts` has second precision, API `played_at` has ms).
+- [x] Export arrived and the import is built (2026-10-18): verified on a throwaway DB with the real export and B's token (80,842 plays added, 38 merged with collected ones, 13,530 tracks and 4,292 artists enriched, rerun adds nothing).
+- [ ] B: run the import on production from your machine: `git pull`, then `npm run history:import -- ~/Downloads/my_spotify_data.zip` (with the prod `DATABASE_URL` in `.env.local`). This session can't reach the prod DB.
 - [ ] Not verified: the hourly schedule firing on its own (manual runs verified 2026-10-16). GitHub pauses schedules after 60 days without repo activity on public repos; re-enable in the Actions tab if it stops.
-- [ ] Ideate history stats and UI once the export is imported.
+- [ ] Ideate history stats and UI (new session; start from `docs/data-model.md`).
 
 ## Future ideas
 
