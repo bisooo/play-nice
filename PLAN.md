@@ -60,7 +60,19 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] Export arrived and the import is built (2026-10-18): verified on a throwaway DB with the real export and B's token (80,842 plays added, 38 merged with collected ones, 13,530 tracks and 4,292 artists enriched, rerun adds nothing).
 - [x] Production import done 2026-10-18 (B, locally): 80,893 plays (80,830 EXPORT, 63 RECENTLY_PLAYED), all tracks/artists enriched; hourly job green right after.
 - [ ] Not verified: the hourly schedule firing on its own (manual runs verified 2026-10-16). GitHub pauses schedules after 60 days without repo activity on public repos; re-enable in the Actions tab if it stops.
-- [ ] Ideate history stats and UI (new session; start from `docs/data-model.md`).
+- [x] Ideate history stats (2026-10-18): 17 stats ranked with real examples in `docs/history-stats.md`; B kept all of them. Fixed along the way: Ye merged into Kanye West (`ARTIST_ALIASES`), time listened capped at track length (CLAUDE.md rule 10).
+- [ ] B: rerun `npm run history:import -- <zip>` locally once the alias commit is deployed, so production's existing Ye tracks get merged (step 5; everything else is a no-op).
+- [ ] History stats phase 1 (data layer), then phase 2 (UI in batches); see "History stats" below.
+
+## History stats (B picked all 17, 2026-10-18)
+
+Full list, how to show each and real examples: `docs/history-stats.md`. ⇄ = interactive.
+
+1. Top of any slice ⇄ (year / month / every-November / time of day / country) · 2. Your eras (No. 1 artist per year) · 3. Artist deep dive ⇄ · 4. The Egyptian turn (genre mix over time) · 5. Comebacks · 6. Forgotten favourites ⇄ · 7. Discovery rate ⇄ · 8. Obsession days · 9. Listening clock ⇄ · 10. On this day ⇄ · 11. Seasonal artists ⇄ · 12. Travel soundtrack ⇄ (export only) · 13. Streaks ⇄ · 14. How old is your music ⇄ · 15. Ride or die · 16. Skip rate ⇄ · 17. Hours per year + longest session.
+
+Proposed phases (not built yet; B to confirm the phase 1 design before coding):
+- **Phase 1, data layer.** A derived `PlayFact` collection rebuilt from `Play` + catalog: one row per play with canonical artist ids, capped time listened, counted flag, and Prague year/month/day/hour, indexed for the pickers. Kept current by the hourly collector (append new plays) with a full rebuild after an import. Fixed stats (2, 4, 5, 6-default, 7, 8, 13, 14, 15, 16, 17) computed once a day into one stored doc, right after the 24h top-items sync; interactive ones (1, 3, 9, 10, 11, 12) queried live on `PlayFact`, CDN-cached per input for a day. Measure on Atlas before adding more.
+- **Phase 2, UI in batches.** A stats page shell that works on phone and laptop, then stats in batches of 3–4, starting with 1 + 2 + 3; mock each batch with real data first, B picks, then build.
 
 ## Future ideas
 

@@ -143,3 +143,12 @@ Verified via local Mongo: seeded the old shape (old schema, 51 real recently-pla
 Checks: typecheck clean, lint (1 pre-existing warning), build ok.
 Not verified: the import on production (needs the prod DATABASE_URL, which this session can't read; B runs it locally); query timings on Atlas.
 Production (same day): B ran `npm run history:import` locally against prod: 63 collected plays converted, 80,830 export plays added, 50 merged, 13,530 tracks and 4,292 artists enriched; counts match the throwaway run (80,880 cleaned plays = added + merged). Manual "Collect listening" run green afterwards.
+
+## 2026-10-18 — Listening history stat ideas, Ye/Kanye merge, time-listened cap
+
+What was done: imported B's export into a throwaway local DB and ran ~30 queries to rank 17 stat ideas with real examples (`docs/history-stats.md`); B kept all 17. Logged them and a two-phase build plan in PLAN.md.
+Bugs found and fixed:
+- Ye has a second Spotify artist id (28 of 29 of its tracks also list Kanye West), so it showed as a separate artist with its own 277 plays. Added `ARTIST_ALIASES` + `canonicalArtistIds` in `src/lib/listeningHistory.mjs`: every catalog write stores canonical ids; import step 5 (`mergeArtistAliases`) rewrites tracks stored earlier.
+- 5,282 export plays run past the track length (1,388 by 30s+; 65 of 3,772 hours; max a 976-minute "Shabba" that made 2018-05-14 the "biggest day"). Raw `msPlayed` kept (append-only history); rule added (CLAUDE.md 10, data-model.md): stats use `min(msPlayed, durationMs)`.
+Verified via throwaway Mongo + B's token: import rerun adds 0 plays, step 5 updates 29 tracks, a second rerun updates 0; no track references Ye's id afterwards; recently-played path still records plays.
+Not verified: production merge (needs B to rerun the import after deploy).
