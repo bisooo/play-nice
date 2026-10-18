@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "history:import": "prisma generate && node scripts/import-spotify-history.mjs"
+    "history:import": "prisma generate && node scripts/import-spotify-history.mjs",
+    "history:rebuild": "prisma generate && node scripts/rebuild-history-stats.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
