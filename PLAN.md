@@ -14,7 +14,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Card reveals (gamified 2026-09-30):** saved in localStorage per user, list and time range (`src/hooks/useReveals.ts`). A card is face-down until revealed (hover, click or tap) at its current rank; after a sync, new entries and rank changes go face-down again and show NEW / ↑n / ↓n once flipped. The first visit to a deck is the baseline (no badges). Reveals don't follow you across devices (DB storage is a future idea).
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
-- **Listening history (2026-10-16, live; reshaped 2026-10-18):** each top-items sync appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played. Plays now point at a catalog (`Track`/`Artist`/`Album`) instead of copying track details, and B's extended streaming history export (2015-10-16 → 2026-10-16, 80.8k music plays) imports with `npm run history:import -- <zip>`; imported into production 2026-10-18 (B ran it: 80,830 export plays added, 50 merged, 63 earlier plays converted; 13,530 tracks, 4,292 artists). Data model and stats rules: `docs/data-model.md`. No stats UI yet.
+- **Listening history (2026-10-16, live; reshaped 2026-10-18):** each top-items sync appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played. Plays now point at a catalog (`Track`/`Artist`/`Album`) instead of copying track details, and B's extended streaming history export (2015-10-16 → 2026-10-16, 80.8k music plays) imports with `npm run history:import -- <zip>`; imported into production 2026-10-18 (B ran it: 80,830 export plays added, 50 merged, 63 earlier plays converted; 13,530 tracks, 4,292 artists). Data model and stats rules: `docs/data-model.md`. Stats data layer built 2026-10-18 (see History stats below); no stats UI yet.
 
 ## Data model
 
@@ -62,7 +62,10 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] Not verified: the hourly schedule firing on its own (manual runs verified 2026-10-16). GitHub pauses schedules after 60 days without repo activity on public repos; re-enable in the Actions tab if it stops.
 - [x] Ideate history stats (2026-10-18): 17 stats ranked with real examples in `docs/history-stats.md`; B kept all of them. Fixed along the way: Ye merged into Kanye West (`ARTIST_ALIASES`), time listened capped at track length (CLAUDE.md rule 10).
 - [ ] B: rerun `npm run history:import -- <zip>` locally once the alias commit is deployed, so production's existing Ye tracks get merged (step 5; everything else is a no-op).
-- [ ] History stats phase 1 (data layer), then phase 2 (UI in batches); see "History stats" below.
+- [x] History stats phase 1, data layer (2026-10-18): PlayFact + daily fixed stats + interactive routes, verified on a throwaway DB against raw plays.
+- [ ] B: after the phase 1 deploy, run `npm run history:rebuild` locally against production (pushes the schema, builds PlayFact, computes the stats). The hourly job skips stats until then.
+- [ ] Not verified: phase 1 timings on Atlas (local: rebuild 6.6–9.4s, fixed stats 3.3–3.9s, interactive 10–230ms). If the daily stats push the collector near its 60s limit, move them to their own call.
+- [ ] History stats phase 2: visuals one stat at a time (see below).
 
 ## History stats (B picked all 17, 2026-10-18)
 
@@ -70,9 +73,13 @@ Full list, how to show each and real examples: `docs/history-stats.md`. ⇄ = in
 
 1. Top of any slice ⇄ (year / month / every-November / time of day / country) · 2. Your eras (No. 1 artist per year) · 3. Artist deep dive ⇄ · 4. The Egyptian turn (genre mix over time) · 5. Comebacks · 6. Forgotten favourites ⇄ · 7. Discovery rate ⇄ · 8. Obsession days · 9. Listening clock ⇄ · 10. On this day ⇄ · 11. Seasonal artists ⇄ · 12. Travel soundtrack ⇄ (export only) · 13. Streaks ⇄ · 14. How old is your music ⇄ · 15. Ride or die · 16. Skip rate ⇄ · 17. Hours per year + longest session.
 
-Proposed phases (not built yet; B to confirm the phase 1 design before coding):
-- **Phase 1, data layer.** A derived `PlayFact` collection rebuilt from `Play` + catalog: one row per play with canonical artist ids, capped time listened, counted flag, and Prague year/month/day/hour, indexed for the pickers. Kept current by the hourly collector (append new plays) with a full rebuild after an import. Fixed stats (2, 4, 5, 6-default, 7, 8, 13, 14, 15, 16, 17) computed once a day into one stored doc, right after the 24h top-items sync; interactive ones (1, 3, 9, 10, 11, 12) queried live on `PlayFact`, CDN-cached per input for a day. Measure on Atlas before adding more.
-- **Phase 2, UI in batches.** A stats page shell that works on phone and laptop, then stats in batches of 3–4, starting with 1 + 2 + 3; mock each batch with real data first, B picks, then build.
+Phases (agreed 2026-10-18):
+- **Phase 1, data layer (built 2026-10-18).** `PlayFact`: one prepared row per play (canonical artists, capped time, counted, Prague date parts), rebuilt from `Play` + catalog; the hourly collector adds new plays' rows, imports and `npm run history:rebuild` rebuild all. Fixed stats computed daily into `HistoryStats`; interactive stats (1, 3, 9, 10) are `/api/history/*` routes, CDN-cached per data version. Details: `docs/data-model.md`; which stat comes from where: `docs/history-stats.md`.
+- **Phase 2, visuals, one stat at a time.** Mock each with real data on phone and laptop, B iterates on the look, then build. Data is ready, so rounds are about looks only.
+
+Notes from B for phase 2 (2026-10-18):
+- Results must feel instant: fixed stats are one stored doc and interactive ones are CDN-cached per data version (phase 1); the UI should also keep what it fetched in memory, like On Repeat does.
+- When a stat changes, hide the change until B reveals it, like the On Repeat card flips, but chosen per stat rather than everywhere.
 
 ## Future ideas
 

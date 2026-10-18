@@ -26,6 +26,32 @@ Ranked by how interesting they are with B's actual data. Every example below is 
 | 16 | **Skip rate**: artists you skip most and never skip | ⇄ min plays | Two short lists | Most skipped: Ari Lennox 36%, Drake 35%, 2Pac 33%. Least: Alicia Keys 6%, Snoh Aalegra 7%, Apollo Brown 8% |
 | 17 | **Hours per year** and longest session | | Bar chart with the account gaps marked, not shown as zeros | 2022 peak: 936h. 2021 762h, 2024 368h, 2026 247h so far. Longest session: 9h, 125 plays, starting 2020-11-19 03:43 |
 
+## Where each stat's data comes from (phase 1, built 2026-10-18)
+
+Fixed = `GET /api/history/stats` → `stats.<key>` (recomputed daily). Interactive = its own route, `?v=<version>` required. See `docs/data-model.md`, "Prepared plays and stats".
+
+| # | Stat | Source |
+|---|---|---|
+| 1 | Top of any slice | `/api/history/top?year&month&from&to&country` |
+| 2, 17 | Eras, hours per year | `eras` (per year: plays, hours, skip rate, top 5 artists, top track) |
+| 3 | Artist deep dive | `/api/history/artist/[id]` (first play + via, per year, peak month, top tracks, streak, by hour) |
+| 4 | Genre mix | `genres` (per year: top 10 genres with share and top 3 artists) |
+| 5 | Comebacks | `comebacks` |
+| 6 | Forgotten favourites | `forgotten` (not played for 1y+, 30+ plays; page filters 2y/3y by `lastPlayed`) |
+| 7 | Discovery rate | `discovery` (per year: count, biggest 5 finds with the track that introduced them) |
+| 8 | Obsession days | `obsessions` |
+| 9 | Listening clock | `clock` (all time); `/api/history/clock?artist&year` |
+| 10 | On this day | `/api/history/on-this-day?month&day` |
+| 11 | Seasonal artists | `seasonal.{winter,spring,summer,autumn}` |
+| 12 | Travel soundtrack | `travel` |
+| 13 | Streaks | `streaks` (overall + top 10 artists), `daily` (plays per date, for a calendar); per artist via #3 |
+| 14 | How old is your music | `age` (per year: median age, same-year and 10y+ shares, plays per release year) |
+| 15 | Ride or die | `rideOrDie` |
+| 16 | Skip rate | `skipRate` (artists with 100+ starts; page filters by plays) |
+| 17 | Longest session | `sessions.longest` |
+
+Also: `totals` (plays, hours, artists, tracks, first/last play, `accountGaps` for marking gaps on year charts).
+
 ## Data issues found while querying (fixed 2026-10-18)
 
 - Kanye West and Ye were two Spotify artist ids, splitting his counts (Ye showed up as a "2025 discovery"). Now merged in the catalog: `ARTIST_ALIASES`, see `docs/data-model.md`.

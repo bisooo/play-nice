@@ -63,6 +63,17 @@ Yes, if queries aggregate plays first and join after. Measured on a local copy w
 
 So: `$group` by `trackId` (and the period) first, `$lookup` `Track` on the grouped rows, unwind `artistIds`, regroup, and `$lookup` names/images only for the final top N. If a stats page ever gets slow, copy `artistIds` onto each play (they never change for a track) before reaching for anything bigger. Atlas will be slower than local; measure there before optimizing.
 
+## Prepared plays and stats
+
+Stats never read `Play` directly. `PlayFact` (one row per play, same `_id`) has what they need already worked out: canonical `artistIds`, `albumId`/`releaseYear`, `listenedMs` (capped at the track's length), `counted` (30s+), `country`, and the Europe/Prague `date`/`year`/`month`/`day`/`hour`/`weekday`. It's derived: `refreshPlayFacts` (`src/lib/listeningHistory.mjs`) builds it inside Mongo with a `$merge`, and it can be dropped and rebuilt at any time. Plays and catalog stay the source of truth.
+
+- **Hourly:** the collector adds rows for new plays only (`refreshRecentPlayFacts`, ~15ms). It does nothing until the first full rebuild.
+- **Full rebuild** (~7–9s locally for 80.9k plays): `npm run history:rebuild` (also pushes the schema and recomputes the fixed stats), and the import script's last step. Run it after changing a rule (time zone, cap, aliases) or the PlayFact shape.
+- **Fixed stats** (no visitor input) are computed by `computeHistoryStats` (`src/lib/historyStats.mjs`, ~3.5s locally, ~200 KB) and stored in `HistoryStats.stats`; the collector recomputes them when they're over 23h old. Served by `GET /api/history/stats`.
+- **Interactive stats** run per request on PlayFact (10–230ms locally): `/api/history/top`, `/api/history/artist/[id]`, `/api/history/clock`, `/api/history/on-this-day`. They're CDN-cached for a day per data version: `HistoryStats.factsUpdatedAt` changes whenever rows are added or rebuilt, `/api/history/stats` returns it as `version`, and the routes require it as `?v=` (409 with the current version otherwise), so new plays mean new cache keys and made-up `v` values can't bypass the cache. Inputs are validated to fixed ranges.
+
+Which stat comes from where: `docs/history-stats.md`.
+
 ## Importing an export
 
 `npm run history:import -- <my_spotify_data.zip or folder>` (from the repo root, reads `.env.local`). It updates the schema, converts any plays stored in the pre-catalog shape, imports the music plays from `Streaming_History_Audio_*.json` (podcasts, audiobooks and video files are skipped), merges with collected plays, then enriches the catalog. Rerunning it, or importing a later export, only adds what's new. Cleaning: exact duplicate rows are dropped, and rows with the same second and track (the export repeats some with tiny `ms_played` differences) count once, keeping the longest.
