@@ -14,7 +14,7 @@ Lean status doc; full history is in HISTORY.md.
 - **Card reveals (gamified 2026-09-30):** saved in localStorage per user, list and time range (`src/hooks/useReveals.ts`). A card is face-down until revealed (hover, click or tap) at its current rank; after a sync, new entries and rank changes go face-down again and show NEW / ↑n / ↓n once flipped. The first visit to a deck is the baseline (no badges). Reveals don't follow you across devices (DB storage is a future idea).
 - **Sampler:** removed 2026-09-30 (page, API routes, components, nav link, home-page FAQ). Its Spotify endpoints are gone for dev-mode apps; re-confirmed with real calls that day.
 
-- **Listening history (2026-10-16, live; reshaped 2026-10-18):** each top-items sync appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played. Plays now point at a catalog (`Track`/`Artist`/`Album`) instead of copying track details, and B's extended streaming history export (2015-10-16 → 2026-10-16, 80.8k music plays) imports with `npm run history:import -- <zip>`; verified on a throwaway DB, **not yet run on production** (B runs it, see Open/Next). Data model and stats rules: `docs/data-model.md`. No stats UI yet.
+- **Listening history (2026-10-16, live; reshaped 2026-10-18):** each top-items sync appends a dated snapshot of all six lists, and an hourly collector (GitHub Actions → `/api/internal/collect`) logs every play from recently played. Plays now point at a catalog (`Track`/`Artist`/`Album`) instead of copying track details, and B's extended streaming history export (2015-10-16 → 2026-10-16, 80.8k music plays) imports with `npm run history:import -- <zip>`; imported into production 2026-10-18 (B ran it: 80,830 export plays added, 50 merged, 63 earlier plays converted; 13,530 tracks, 4,292 artists). Data model and stats rules: `docs/data-model.md`. No stats UI yet.
 
 ## Data model
 
@@ -58,7 +58,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 
 - [x] History collection live (2026-10-16): token re-minted with `user-read-recently-played`, `CRON_SECRET` set in Vercel + GitHub, prod indexes pushed. First manual "Collect listening" run green: 50 plays stored.
 - [x] Export arrived and the import is built (2026-10-18): verified on a throwaway DB with the real export and B's token (80,842 plays added, 38 merged with collected ones, 13,530 tracks and 4,292 artists enriched, rerun adds nothing).
-- [ ] B: run the import on production from your machine: `git pull`, then `npm run history:import -- ~/Downloads/my_spotify_data.zip` (with the prod `DATABASE_URL` in `.env.local`). This session can't reach the prod DB.
+- [x] Production import done 2026-10-18 (B, locally): 80,893 plays (80,830 EXPORT, 63 RECENTLY_PLAYED), all tracks/artists enriched; hourly job green right after.
 - [ ] Not verified: the hourly schedule firing on its own (manual runs verified 2026-10-16). GitHub pauses schedules after 60 days without repo activity on public repos; re-enable in the Actions tab if it stops.
 - [ ] Ideate history stats and UI (new session; start from `docs/data-model.md`).
 
