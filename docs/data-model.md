@@ -35,6 +35,7 @@ Unique on `(userId, playedAt, trackId)`: two sources' copies of the same listen 
 ### Rules for stats
 
 - **Time zone:** `playedAt` is UTC. Group by day/month/hour in B's time zone explicitly (mostly `Europe/Prague`; plays in other countries are a known inaccuracy), e.g. `$dateToParts: { date: "$playedAt", timezone: "Europe/Prague" }`.
+- **Time listened is `min(msPlayed, Track.durationMs)`, never raw `msPlayed`.** Each play is its own row (a replay or repeat is a new play), but the export sometimes logs one play far past the track's length (seeking back, a stalled or paused player): 5.3k plays, 65 of 3,772 hours, one A$AP Ferg "Shabba" at 976 minutes that made 2018-05-14 look like the biggest day ever. Raw `msPlayed` stays as Spotify reported it (history is append-only); stats cap it when they read. Counted/skip tests are unaffected.
 - **A counted play is `msPlayed >= 30000`**, Spotify's own stream threshold. Shorter is a skip. Over the export: 65.4k of 80.8k music plays count.
 - **Gaps:** the export has no plays 2015-10-29 → 2016-03-05, 2016-05-02 → 2017-10-18 and 2019-06-07 → 2020-09-17 (B wasn't listening on this account). Year-over-year stats should say so rather than show zeros as a trend.
 - Recently played only returns the last 50 plays and seems to drop some very short ones (1 missed partial play of 38 on 2026-10-16), so post-export skip counts are slightly low.
@@ -46,6 +47,8 @@ Unique on `(userId, playedAt, trackId)`: two sources' copies of the same listen 
 | `Track` | Spotify track id | `name`, `artistIds` (all artists, in order), `albumId`, `durationMs`, `enrichedAt`; `exportArtistName`, `exportAlbumName` as a fallback |
 | `Artist` | Spotify artist id | `name`, `imageUrl`, `genres`, `enrichedAt` |
 | `Album` | Spotify album id | `name`, `imageUrl`, `releaseDate` |
+
+**Artist aliases:** Spotify sometimes has two ids for one artist (Ye's 2025 profile next to Kanye West). `ARTIST_ALIASES` in `src/lib/listeningHistory.mjs` maps the alias to the id stats use; tracks are stored with canonical ids only (on every catalog write, and `mergeArtistAliases` in the import script fixes tracks stored earlier), so stats need no special case. Add a line there when another one shows up.
 
 Plays point at tracks by id; nothing about the track is copied onto the play, so a name or image is stored once. The export only has a track id plus the **album** artist's name, so imported tracks start as stubs and are filled in ("enriched") by `GET /tracks?ids=` (50 per call), which gives every artist, the album and the length; artists then get images and genres from `GET /artists?ids=`. The hourly collector enriches up to 50 new artists per run; tracks it sees in recently played come with full details. A track Spotify no longer returns keeps its export names and `artistIds: []`.
 

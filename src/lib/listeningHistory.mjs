@@ -10,6 +10,15 @@ const SAME_PLAY_MS = 1000; // the export's ts has second precision, the API's pl
 
 const asDate = value => (value instanceof Date ? value : new Date(value));
 
+// Spotify ids that are the same artist, alias → the id stats use. Tracks store the canonical id
+// only, so every stat counts them as one artist.
+export const ARTIST_ALIASES = {
+  '3NlsBPwqJuDgtXZ2rv5Dmq': '5K4W6rqBFWDnAN6FQUkS6x', // Ye → Kanye West (2025 profile; most tracks list both)
+};
+
+// Track artist ids with aliases replaced, order kept, duplicates dropped
+export const canonicalArtistIds = ids => [...new Set(ids.map(id => ARTIST_ALIASES[id] ?? id))];
+
 // --- Catalog -----------------------------------------------------------------------------
 
 // Track, album and artist (id + name) records from full Spotify track objects. Artists from a
@@ -30,7 +39,7 @@ export async function upsertCatalogFromTracks(prisma, tracks, now = new Date()) 
     u: {
       $set: {
         name: track.name,
-        artistIds: (track.artists ?? []).map(a => a.id).filter(Boolean),
+        artistIds: canonicalArtistIds((track.artists ?? []).map(a => a.id).filter(Boolean)),
         albumId: track.album?.id ?? null,
         durationMs: track.duration_ms ?? null,
         enrichedAt: { $date: now.toISOString() },
@@ -57,6 +66,19 @@ export async function upsertCatalogFromTracks(prisma, tracks, now = new Date()) 
     u: { $set: { name: artist.name }, $setOnInsert: { genres: [] } },
     upsert: true,
   })));
+}
+
+// Rewrites tracks stored before an alias was added. Returns how many changed. Safe to rerun.
+export async function mergeArtistAliases(prisma) {
+  const tracks = await prisma.track.findMany({
+    where: { artistIds: { hasSome: Object.keys(ARTIST_ALIASES) } },
+    select: { id: true, artistIds: true },
+  });
+  await bulkUpdate(prisma, 'Track', tracks.map(track => ({
+    q: { _id: track.id },
+    u: { $set: { artistIds: canonicalArtistIds(track.artistIds) } },
+  })));
+  return tracks.length;
 }
 
 // Fills in tracks that only have export names (no artists/album/length yet). Returns how many

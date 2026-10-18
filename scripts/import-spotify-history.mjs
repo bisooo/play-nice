@@ -9,13 +9,14 @@
 //   2. converts plays saved before the catalog existed (track details on each play) to the new shape
 //   3. imports the export's music plays, merging with plays the hourly collector already has
 //   4. looks up every track and artist on Spotify (artists, album, length, images, genres)
+//   5. merges artist aliases (ARTIST_ALIASES, e.g. Ye into Kanye West) on tracks stored earlier
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import prismaPkg from '@prisma/client';
-import { bulkUpdate, cleanExportRows, enrichArtists, enrichTracks, importExportPlays } from '../src/lib/listeningHistory.mjs';
+import { bulkUpdate, cleanExportRows, enrichArtists, enrichTracks, importExportPlays, mergeArtistAliases } from '../src/lib/listeningHistory.mjs';
 
 const { PrismaClient } = prismaPkg;
 
@@ -126,7 +127,7 @@ async function migrateLegacyPlays(prisma) {
 const db = new URL(process.env.DATABASE_URL);
 console.log(`Database: ${db.host}${db.pathname}`);
 
-console.log('1/4 Updating the database schema');
+console.log('1/5 Updating the database schema');
 execFileSync('npx', ['prisma', 'db', 'push', '--skip-generate'], { stdio: 'inherit', env: process.env });
 
 const prisma = new PrismaClient();
@@ -137,10 +138,10 @@ try {
   if (!owner) fail(`No user row for Spotify account ${me.id} yet: open the app once so it creates it, then rerun.`);
   console.log(`  Spotify account: ${me.id}`);
 
-  console.log('2/4 Converting plays saved before the catalog');
+  console.log('2/5 Converting plays saved before the catalog');
   console.log(`  ${await migrateLegacyPlays(prisma)} converted`);
 
-  console.log('3/4 Importing the export');
+  console.log('3/5 Importing the export');
   let folder = input;
   let unzipped;
   if (statSync(input).isFile()) {
@@ -156,9 +157,12 @@ try {
   const result = await importExportPlays(prisma, owner.id, plays);
   console.log(`  ${result.inserted} added, ${result.merged} merged with collected plays, ${result.skipped} already imported, ${result.newTracks} new tracks`);
 
-  console.log('4/4 Looking up tracks and artists on Spotify');
+  console.log('4/5 Looking up tracks and artists on Spotify');
   console.log(`  ${await enrichTracks(prisma, spotifyGet)} tracks`);
   console.log(`  ${await enrichArtists(prisma, spotifyGet)} artists`);
+
+  console.log('5/5 Merging artist aliases');
+  console.log(`  ${await mergeArtistAliases(prisma)} tracks updated`);
 
   const [bySource, first, last, tracks, unmatched, artists] = await Promise.all([
     prisma.play.groupBy({ by: ['source'], where: { userId: owner.id }, _count: true }),
