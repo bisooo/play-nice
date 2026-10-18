@@ -63,8 +63,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] Ideate history stats (2026-10-18): 17 stats ranked with real examples in `docs/history-stats.md`; B kept all of them. Fixed along the way: Ye merged into Kanye West (`ARTIST_ALIASES`), time listened capped at track length (CLAUDE.md rule 10).
 - [ ] B: rerun `npm run history:import -- <zip>` locally once the alias commit is deployed, so production's existing Ye tracks get merged (step 5; everything else is a no-op).
 - [x] History stats phase 1, data layer (2026-10-18): PlayFact + daily fixed stats + interactive routes, verified on a throwaway DB against raw plays.
-- [ ] B: after the phase 1 deploy, run `npm run history:rebuild` locally against production (pushes the schema, builds PlayFact, computes the stats). The hourly job skips stats until then.
-- [ ] Not verified: phase 1 timings on Atlas (local: rebuild 6.6–9.4s, fixed stats 3.3–3.9s, interactive 10–230ms). If the daily stats push the collector near its 60s limit, move them to their own call.
+- [x] Phase 1 live (2026-10-18): B ran `npm run history:rebuild` on production from their Mac: PlayFact 80,893 rows in 30.8s, fixed stats in 11.6s (65,500 counted plays, 3,710h, same as the throwaway DB). `/api/history/stats` serves them; `/api/history/top?month=11&v=…` returned Kendrick 325 / 070 Shake 277, CDN MISS 1.56s then HIT 0.19s; no `v` → 409.
+- [ ] Watch: the collector recomputes the fixed stats daily inside its 60s limit (11.6s from B's Mac to Atlas, plus the top-items sync). If a collect run times out, move the stats to their own call.
 - [ ] History stats phase 2: visuals one stat at a time (see below).
 
 ## History stats (B picked all 17, 2026-10-18)
