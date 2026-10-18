@@ -3,7 +3,7 @@ import { SpotifyService } from '../lib/spotifyService';
 import UserManager from '../lib/userManager';
 import { SpotifyArtist, SpotifyRecentlyPlayedResponse, SpotifyTopArtistsResponse, SpotifyTrack } from '@/types/spotify';
 import { prisma } from '../lib/prisma';
-import { enrichArtists, recordRecentlyPlayed } from '../lib/listeningHistory.mjs';
+import { enrichArtists, recordRecentlyPlayed, refreshRecentPlayFacts } from '../lib/listeningHistory.mjs';
 
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
@@ -39,12 +39,13 @@ export class UserService {
     }
   }
 
-  // Saves any of the last 50 plays not stored yet, and fills in a batch of artists the catalog
-  // only has names for. Spotify only returns the last 50 plays, so anything beyond that between
+  // Saves any of the last 50 plays not stored yet, prepares their stats rows, and fills in a
+  // batch of artists the catalog only has names for. Spotify only returns the last 50 plays, so anything beyond that between
   // polls is lost; poll at least every couple of hours. Data model: docs/data-model.md.
   static async recordRecentPlays(userId: string, spotifyService: SpotifyService) {
     const recent: SpotifyRecentlyPlayedResponse = await spotifyService.getRecentlyPlayed();
     const result = await recordRecentlyPlayed(prisma, userId, recent.items);
+    await refreshRecentPlayFacts(prisma, userId);
     const artistsEnriched = await enrichArtists(prisma, (path: string) => spotifyService.getPath(path), 50);
     return { ...result, artistsEnriched };
   }

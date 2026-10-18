@@ -315,3 +315,67 @@ export async function bulkUpdate(prisma, collection, updates) {
     await prisma.$runCommandRaw({ update: collection, updates: chunk, ordered: false });
   }
 }
+
+// --- Prepared plays (PlayFact) -------------------------------------------------------------
+
+export const STATS_TIME_ZONE = 'Europe/Prague';
+export const COUNTED_MS = 30000; // Spotify's stream threshold; shorter is a skip
+
+// Builds PlayFact rows for plays from `since` on (all plays if null) and upserts them by the
+// play's _id, then bumps HistoryStats.factsUpdatedAt (on a full rebuild or when rows were added)
+// so cached interactive stats refetch. Runs
+// inside Mongo. Play is append-only, so rows are never deleted; a full rebuild (since = null)
+// picks up catalog changes (aliases, tracks enriched later) and rule changes. Returns how many
+// plays were processed.
+export async function refreshPlayFacts(prisma, userId, since = null) {
+  const match = { userId: { $oid: userId } };
+  if (since) match.playedAt = { $gte: { $date: asDate(since).toISOString() } };
+  const local = { date: '$playedAt', timezone: STATS_TIME_ZONE };
+  const msPlayed = { $ifNull: [{ $toInt: '$msPlayed' }, 0] };
+
+  const pipeline = [
+    { $match: match },
+    { $lookup: { from: 'Track', localField: 'trackId', foreignField: '_id', as: 'track' } },
+    { $set: { track: { $first: '$track' } } },
+    { $lookup: { from: 'Album', localField: 'track.albumId', foreignField: '_id', as: 'album' } },
+    {
+      $project: {
+        userId: 1,
+        playedAt: 1,
+        trackId: 1,
+        artistIds: { $ifNull: ['$track.artistIds', []] },
+        albumId: { $ifNull: ['$track.albumId', null] },
+        releaseYear: {
+          $convert: { input: { $substrCP: [{ $ifNull: [{ $first: '$album.releaseDate' }, ''] }, 0, 4] }, to: 'int', onError: null, onNull: null },
+        },
+        listenedMs: { $cond: [{ $gt: ['$track.durationMs', 0] }, { $min: [msPlayed, '$track.durationMs'] }, msPlayed] },
+        counted: { $gte: [msPlayed, COUNTED_MS] },
+        country: { $ifNull: ['$country', null] },
+        date: { $dateToString: { date: '$playedAt', timezone: STATS_TIME_ZONE, format: '%Y-%m-%d' } },
+        year: { $year: local },
+        month: { $month: local },
+        day: { $dayOfMonth: local },
+        hour: { $hour: local },
+        weekday: { $dayOfWeek: local },
+      },
+    },
+    { $merge: { into: 'PlayFact', on: '_id', whenMatched: 'replace', whenNotMatched: 'insert' } },
+  ];
+  const count = await prisma.play.count({ where: { userId, ...(since ? { playedAt: { gte: asDate(since) } } : {}) } });
+  const before = await prisma.playFact.count({ where: { userId } });
+  await prisma.$runCommandRaw({ aggregate: 'Play', pipeline, cursor: {} });
+  if (!since || (await prisma.playFact.count({ where: { userId } })) !== before) {
+    const now = new Date();
+    await prisma.historyStats.upsert({ where: { userId }, create: { userId, factsUpdatedAt: now }, update: { factsUpdatedAt: now } });
+  }
+  return count;
+}
+
+// New plays since the newest prepared row (with an hour's margin, rows are idempotent). Does
+// nothing until the first full rebuild (npm run history:rebuild), which is too slow for the
+// hourly job's time limit.
+export async function refreshRecentPlayFacts(prisma, userId) {
+  const newest = await prisma.playFact.findFirst({ where: { userId }, orderBy: { playedAt: 'desc' }, select: { playedAt: true } });
+  if (!newest) return 0;
+  return refreshPlayFacts(prisma, userId, new Date(newest.playedAt.getTime() - 60 * 60 * 1000));
+}

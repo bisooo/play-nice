@@ -160,6 +160,44 @@ model Album {
   releaseDate String? // as Spotify gives it: YYYY, YYYY-MM or YYYY-MM-DD
 }
 
+// One row per Play, with what stats need already worked out (docs/data-model.md, "Prepared
+// plays"). Derived: rebuilt from Play + catalog at any time (npm run history:rebuild), never
+// edited by hand. Same _id as its Play.
+model PlayFact {
+  id          String   @id @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  playedAt    DateTime
+  trackId     String
+  artistIds   String[] // canonical (aliases merged), main artist first
+  albumId     String?
+  releaseYear Int?
+  listenedMs  Int // min(msPlayed, track length)
+  counted     Boolean // msPlayed >= 30s
+  country     String?
+  // Europe/Prague local time
+  date        String // YYYY-MM-DD
+  year        Int
+  month       Int
+  day         Int
+  hour        Int
+  weekday     Int // 1 = Sunday ... 7 = Saturday (Mongo's $dayOfWeek)
+
+  @@index([userId, playedAt])
+  @@index([userId, year, month])
+  @@index([userId, month, day])
+  @@index([userId, artistIds])
+}
+
+// The fixed stats (no visitor input), recomputed daily from PlayFact. One document per user;
+// `stats` is the JSON the stats pages read. factsUpdatedAt versions the interactive stats' cache.
+model HistoryStats {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique @db.ObjectId
+  computedAt     DateTime?
+  factsUpdatedAt DateTime
+  stats          Json?
+}
+
 type PlayArtist {
   spotifyId String
   name      String
