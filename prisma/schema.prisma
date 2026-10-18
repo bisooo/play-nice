@@ -106,24 +106,58 @@ type SnapshotTrack {
   rank      Int
 }
 
-// One document per play. playedAt is when the track finished (Spotify's played_at).
-model Play {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String       @db.ObjectId
-  playedAt    DateTime
-  trackId     String
-  trackName   String
-  artists     PlayArtist[]
-  albumId     String?
-  albumName   String?
-  imageUrl    String?
-  durationMs  Int?
-  contextType String?
-  contextUri  String?
-  source      PlaySource
+// Listening history = Play (one per listen) + catalog (Track, Artist, Album, one per thing).
+// A play stores only what's true of that listen and points at its Track by Spotify id;
+// names, artists, covers and genres live once in the catalog. See docs/data-model.md.
 
-  @@unique([userId, playedAt])
+// playedAt is when the play ended (Spotify's played_at / the export's ts), in UTC.
+model Play {
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String     @db.ObjectId
+  playedAt          DateTime
+  trackId           String
+  // Time actually listened. Exact for EXPORT; for RECENTLY_PLAYED estimated as the time
+  // since the previous play, capped at the track's length (msPlayedEstimated = true).
+  msPlayed          Int?
+  msPlayedEstimated Boolean    @default(false)
+  // Only RECENTLY_PLAYED has where it was played from (album/playlist/artist)
+  contextType       String?
+  contextUri        String?
+  // Only EXPORT has the country it was played in (ISO code; the export's ZZ = unknown → null)
+  country           String?
+  source            PlaySource
+
+  @@unique([userId, playedAt, trackId])
   @@index([userId, trackId])
+}
+
+model Track {
+  id               String    @id @map("_id") // Spotify track id
+  name             String
+  artistIds        String[] // Spotify artist ids, main artist first
+  albumId          String?
+  durationMs       Int?
+  // Set once filled in from Spotify. Tracks first seen in an export have only names until then.
+  enrichedAt       DateTime?
+  // From the export, used until enriched (or if Spotify no longer has the track)
+  exportArtistName String?
+  exportAlbumName  String?
+}
+
+model Artist {
+  id         String    @id @map("_id") // Spotify artist id
+  name       String
+  imageUrl   String?
+  genres     String[]
+  // Set once images/genres are fetched; tracks only carry an artist's id and name
+  enrichedAt DateTime?
+}
+
+model Album {
+  id          String  @id @map("_id") // Spotify album id
+  name        String
+  imageUrl    String?
+  releaseDate String? // as Spotify gives it: YYYY, YYYY-MM or YYYY-MM-DD
 }
 
 type PlayArtist {

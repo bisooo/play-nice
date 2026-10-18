@@ -1,8 +1,9 @@
-import { PlaySource, TimeRange } from '@prisma/client';
+import { TimeRange } from '@prisma/client';
 import { SpotifyService } from '../lib/spotifyService';
 import UserManager from '../lib/userManager';
 import { SpotifyArtist, SpotifyRecentlyPlayedResponse, SpotifyTopArtistsResponse, SpotifyTrack } from '@/types/spotify';
-import { PlayData } from '@/types/user';
+import { prisma } from '../lib/prisma';
+import { enrichArtists, recordRecentlyPlayed } from '../lib/listeningHistory.mjs';
 
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
@@ -38,33 +39,14 @@ export class UserService {
     }
   }
 
-  // Saves any of the last 50 plays not stored yet (not just ones newer than the latest stored,
-  // so a run cut off midway is filled in by the next). Spotify only returns the last 50, so
-  // anything beyond that between polls is lost; poll at least every couple of hours.
+  // Saves any of the last 50 plays not stored yet, and fills in a batch of artists the catalog
+  // only has names for. Spotify only returns the last 50 plays, so anything beyond that between
+  // polls is lost; poll at least every couple of hours. Data model: docs/data-model.md.
   static async recordRecentPlays(userId: string, spotifyService: SpotifyService) {
     const recent: SpotifyRecentlyPlayedResponse = await spotifyService.getRecentlyPlayed();
-
-    const plays: PlayData[] = recent.items
-      .filter(item => item.track?.id)
-      .map(item => ({
-        playedAt: new Date(item.played_at),
-        trackId: item.track.id,
-        trackName: item.track.name,
-        artists: item.track.artists.map(artist => ({ spotifyId: artist.id, name: artist.name })),
-        albumId: item.track.album?.id,
-        albumName: item.track.album?.name,
-        imageUrl: item.track.album?.images[0]?.url,
-        durationMs: item.track.duration_ms,
-        contextType: item.context?.type,
-        contextUri: item.context?.uri,
-        source: PlaySource.RECENTLY_PLAYED,
-      }));
-
-    const stored = await UserManager.getStoredPlayTimes(userId, plays.map(play => play.playedAt));
-    const newPlays = plays.filter(play => !stored.has(play.playedAt.getTime()));
-
-    await UserManager.addPlays(userId, newPlays);
-    return { fetched: recent.items.length, added: newPlays.length };
+    const result = await recordRecentlyPlayed(prisma, userId, recent.items);
+    const artistsEnriched = await enrichArtists(prisma, (path: string) => spotifyService.getPath(path), 50);
+    return { ...result, artistsEnriched };
   }
 
   private static async updateTopArtists(userId: string, spotifyService: SpotifyService, spotifyRange: 'short_term' | 'medium_term' | 'long_term', prismaRange: TimeRange, capturedAt: Date) {

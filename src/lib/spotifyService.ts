@@ -36,6 +36,11 @@ export class SpotifyService {
     }
   }
 
+  // Any GET by path, e.g. 'artists?ids=...' (used by src/lib/listeningHistory.mjs)
+  public async getPath(path: string) {
+    return this.get(path);
+  }
+
   public async getMe() {
     return this.get('me');
   }

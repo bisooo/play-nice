@@ -1,4 +1,4 @@
-import { PlaySource, TimeRange } from '@prisma/client';
+import { TimeRange } from '@prisma/client';
 
 export interface UserData {
   spotifyId: string;
@@ -50,20 +50,6 @@ export interface SnapshotTrackData {
   albumName?: string;
   imageUrl?: string;
   rank: number;
-}
-
-export interface PlayData {
-  playedAt: Date;
-  trackId: string;
-  trackName: string;
-  artists: PlayArtistData[];
-  albumId?: string;
-  albumName?: string;
-  imageUrl?: string;
-  durationMs?: number;
-  contextType?: string;
-  contextUri?: string;
-  source: PlaySource;
 }
 
 export interface UserInsights {

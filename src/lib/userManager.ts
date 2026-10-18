@@ -1,6 +1,6 @@
-import { PlayData, SnapshotArtistData, SnapshotTrackData, TopArtistData, TopTrackData, UserData } from '@/types/user';
+import { SnapshotArtistData, SnapshotTrackData, TopArtistData, TopTrackData, UserData } from '@/types/user';
 import { prisma } from './prisma';
-import { Prisma, TimeRange } from '@prisma/client';
+import { TimeRange } from '@prisma/client';
 
 class UserManager {
   async upsertUser(userData: UserData) {
@@ -119,34 +119,6 @@ class UserManager {
     } catch (error) {
       console.error('Error updating last top items update time:', error);
       throw error;
-    }
-  }
-
-  // playedAt values of these plays that are already stored
-  async getStoredPlayTimes(userId: string, playedAt: Date[]) {
-    const stored = await prisma.play.findMany({
-      where: { userId, playedAt: { in: playedAt } },
-      select: { playedAt: true },
-    });
-    return new Set(stored.map(play => play.playedAt.getTime()));
-  }
-
-  // One batch insert (a Vercel Hobby function gets 10s; 50 upserts took ~14s). If a concurrent
-  // poll inserted some first, the unique (userId, playedAt) rejects the batch and we fall back
-  // to upserts, which skip what's already there.
-  async addPlays(userId: string, plays: PlayData[]) {
-    if (plays.length === 0) return;
-    try {
-      await prisma.play.createMany({ data: plays.map(play => ({ ...play, userId })) });
-    } catch (error) {
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) throw error;
-      for (const play of plays) {
-        await prisma.play.upsert({
-          where: { userId_playedAt: { userId, playedAt: play.playedAt } },
-          update: {},
-          create: { ...play, userId },
-        });
-      }
     }
   }
 
