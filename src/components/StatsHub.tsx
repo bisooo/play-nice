@@ -58,7 +58,7 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
   const monthLeader = top?.[0]?.name;
   return (
     <Tile
-      name="MY CHARTS"
+      name="CHARTS"
       href="/charts"
       visual={
         top ? (
@@ -113,7 +113,7 @@ function ErasTile({ stats }: { stats: HistoryStats | null }) {
     .map((era) => ({ year: era.year, ...era.topArtists[0] }));
   return (
     <Tile
-      name="MY ERAS"
+      name="ERAS"
       href="/eras"
       visual={
         stats ? (
