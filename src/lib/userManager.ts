@@ -2,6 +2,9 @@ import { SnapshotArtistData, SnapshotTrackData, TopArtistData, TopTrackData, Use
 import { prisma } from './prisma';
 import { TimeRange } from '@prisma/client';
 
+// Prisma's default 5s closed the top-tracks transaction mid-write when Atlas was slow (P2028)
+const SYNC_TRANSACTION = { maxWait: 10_000, timeout: 20_000 };
+
 class UserManager {
   async upsertUser(userData: UserData) {
     try {
@@ -60,7 +63,7 @@ class UserManager {
         await prisma.topArtistSnapshot.create({
           data: { userId, timeRange, capturedAt, items: snapshot },
         });
-      });
+      }, SYNC_TRANSACTION);
     } catch (error) {
       console.error('Error updating top artists:', error);
       throw error;
@@ -86,7 +89,7 @@ class UserManager {
         await prisma.topTrackSnapshot.create({
           data: { userId, timeRange, capturedAt, items: snapshot },
         });
-      });
+      }, SYNC_TRANSACTION);
     } catch (error) {
       console.error('Error updating top tracks:', error);
       throw error;
