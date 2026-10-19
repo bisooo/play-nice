@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
+import { MotionConfig, motion, useReducedMotion } from "framer-motion";
 import { usePathname, useSearchParams } from "next/navigation";
 import { logoFont } from "@/lib/fonts";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,12 +116,12 @@ function Picker({ title, options, value, onPick, onClose }: {
   );
   return (
     <>
-      <div className="fixed inset-0 z-[60] bg-black/60 sm:hidden" />
+      <div className="fixed inset-0 z-[60] bg-black/60 duration-200 animate-in fade-in sm:hidden" />
       <div
         ref={ref}
         role="dialog"
         aria-label={title}
-        className="fixed inset-x-0 bottom-0 z-[61] max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t bg-background p-4 pb-8 shadow-xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-2 sm:w-[24rem] sm:rounded-lg sm:border sm:pb-4"
+        className="fixed inset-x-0 bottom-0 z-[61] max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t bg-background p-4 pb-8 shadow-xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-2 sm:w-[24rem] sm:rounded-lg sm:border sm:pb-4 duration-200 ease-out animate-in slide-in-from-bottom sm:fade-in sm:slide-in-from-bottom-0 sm:slide-in-from-top-1"
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted sm:hidden" />
         <p className={`${logo} mb-2 text-xs text-muted-foreground`}>{title}</p>
@@ -133,10 +134,43 @@ function Picker({ title, options, value, onPick, onClose }: {
   );
 }
 
+// A number that runs from its last value to the new one, briefly, when the slice changes
+function Count({ value }: { value: number }) {
+  const reduce = useReducedMotion();
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const start = from.current;
+    from.current = value;
+    if (reduce || start === value) return setShown(value);
+    let frame = 0;
+    const began = performance.now();
+    const step = (now: number) => {
+      const t = Math.min((now - began) / 450, 1);
+      setShown(Math.round(start + (value - start) * (1 - (1 - t) ** 3)));
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [value, reduce]);
+  return <>{n(shown)}</>;
+}
+
 function Row({ rank, item, max, track }: { rank: number; item: HistoryArtist | HistoryTrack; max: number; track?: boolean }) {
   return (
-    <li className="relative flex items-center gap-3 overflow-hidden rounded-md px-2 py-1 lg:py-0.5">
-      <div className="absolute inset-y-0 left-0 border-r-2 border-blue-500 bg-white/[0.07]" style={{ width: `${(item.plays / max) * 100}%` }} />
+    <motion.li
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut", delay: rank * 0.025 }}
+      className="relative flex items-center gap-3 overflow-hidden rounded-md px-2 py-1 lg:py-0.5"
+    >
+      <motion.div
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 + rank * 0.025 }}
+        className="absolute inset-y-0 left-0 origin-left border-r-2 border-blue-500 bg-white/[0.07]"
+        style={{ width: `${(item.plays / max) * 100}%` }}
+      />
       <span className={`relative w-7 text-right font-bold tabular-nums ${rank === 1 ? "text-lg text-blue-400" : "text-sm text-muted-foreground"}`}>{rank}</span>
       <div className="relative h-10 w-10 shrink-0">
         <Image
@@ -155,16 +189,18 @@ function Row({ rank, item, max, track }: { rank: number; item: HistoryArtist | H
         {n(item.plays)}
         <span className="ml-1 text-xs text-muted-foreground">{item.plays === 1 ? "play" : "plays"}</span>
       </span>
-    </li>
+    </motion.li>
   );
 }
 
-function Board({ title, items, track, dim }: { title: string; items: (HistoryArtist | HistoryTrack)[] | undefined; track?: boolean; dim?: boolean }) {
+// Rows ease in one after another and their bars grow whenever a new result lands (keyed by it);
+// while the next one loads, the current list fades back rather than blanking out
+function Board({ title, items, track, dim, resultKey }: { title: string; items: (HistoryArtist | HistoryTrack)[] | undefined; track?: boolean; dim?: boolean; resultKey: string | null }) {
   return (
     <Card className="w-full">
       <CardContent className="p-4 sm:p-5">
         <h2 className={`${logo} mb-3 px-2 text-base text-muted-foreground`}>{title}</h2>
-        <ol className={`space-y-1 transition-opacity ${dim ? "opacity-50" : ""}`}>
+        <ol key={resultKey ?? "loading"} className={`space-y-1 transition-opacity duration-300 ${dim ? "opacity-40" : ""}`}>
           {items
             ? items.map((item, i) => <Row key={item.id} rank={i + 1} item={item} max={items[0].plays} track={track} />)
             : Array.from({ length: 10 }, (_, i) => (
@@ -193,7 +229,7 @@ export default function MyCharts() {
     hours: filters.time ? [...TIMES[filters.time].hours] : undefined,
     country: filters.place,
   };
-  const { slice, loading, error } = useSlice(query);
+  const { slice, sliceKey, loading, error } = useSlice(query);
 
   // The latest filters, so two quick picks build on each other before the URL catches up
   const latest = useRef(filters);
@@ -274,59 +310,61 @@ export default function MyCharts() {
   const picker = open && pickers[open];
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 pb-6 pt-[5.5rem]">
-      <div className="relative">
-        <h1 className={`${logo} text-[1.6rem] uppercase leading-[1.45] sm:text-[2.6rem] sm:leading-[1.35]`}>
-          {/* phones show one list, so the first word switches it; laptops show both */}
-          <span className="lg:hidden">{sentence(<Word onClick={() => update({ tracks: !filters.tracks })}>{filters.tracks ? "tracks" : "artists"}</Word>)}</span>
-          <span className="hidden lg:inline">{sentence(<Word>artists and tracks</Word>)}</span>
-        </h1>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {!year && <AddChip onClick={() => toggle("year")}>year</AddChip>}
-          {!month && <AddChip onClick={() => toggle("month")}>month</AddChip>}
-          {!time && <AddChip onClick={() => toggle("time")}>time of day</AddChip>}
-          {!place && <AddChip onClick={() => toggle("place")}>place</AddChip>}
+    <MotionConfig reducedMotion="user">
+      <div className="container mx-auto max-w-6xl px-4 pb-6 pt-[5.5rem]">
+        <div className="relative">
+          <h1 className={`${logo} text-[1.6rem] uppercase leading-[1.45] sm:text-[2.6rem] sm:leading-[1.35]`}>
+            {/* phones show one list, so the first word switches it; laptops show both */}
+            <span className="lg:hidden">{sentence(<Word onClick={() => update({ tracks: !filters.tracks })}>{filters.tracks ? "tracks" : "artists"}</Word>)}</span>
+            <span className="hidden lg:inline">{sentence(<Word>artists and tracks</Word>)}</span>
+          </h1>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {!year && <AddChip onClick={() => toggle("year")}>year</AddChip>}
+            {!month && <AddChip onClick={() => toggle("month")}>month</AddChip>}
+            {!time && <AddChip onClick={() => toggle("time")}>time of day</AddChip>}
+            {!place && <AddChip onClick={() => toggle("place")}>place</AddChip>}
+          </div>
+          {picker && (
+            <Picker
+              title={picker.title}
+              options={picker.options}
+              value={picker.value}
+              onPick={(value) => {
+                picker.pick(value);
+                close();
+              }}
+              onClose={close}
+            />
+          )}
         </div>
-        {picker && (
-          <Picker
-            title={picker.title}
-            options={picker.options}
-            value={picker.value}
-            onPick={(value) => {
-              picker.pick(value);
-              close();
-            }}
-            onClose={close}
-          />
+
+        <div className="mb-6 mt-5 flex items-baseline gap-6">
+          {(["plays", "hours"] as const).map((key) => (
+            <p key={key}>
+              <span className={`text-2xl font-extrabold tabular-nums tracking-tight transition-opacity duration-300 sm:text-4xl ${loading && slice ? "opacity-40" : ""}`}>{slice ? <Count value={slice[key]} /> : "–"}</span>{" "}
+              <span className={`${logo} text-xs uppercase text-muted-foreground sm:text-sm`}>{key}</span>
+            </p>
+          ))}
+        </div>
+
+        {failure ? (
+          <Alert variant="destructive">
+            <AlertTitle>Couldn&apos;t load my charts</AlertTitle>
+            <AlertDescription>{failure.message}. Try again in a bit.</AlertDescription>
+          </Alert>
+        ) : empty ? (
+          <p className="py-10 text-center text-muted-foreground">Nothing played here. Try taking a filter off.</p>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className={`min-w-0 ${filters.tracks ? "hidden lg:block" : ""}`}>
+              <Board title="ARTISTS" items={slice?.topArtists} dim={loading && !!slice} resultKey={sliceKey} />
+            </div>
+            <div className={`min-w-0 ${filters.tracks ? "" : "hidden lg:block"}`}>
+              <Board title="TRACKS" items={slice?.topTracks} track dim={loading && !!slice} resultKey={sliceKey} />
+            </div>
+          </div>
         )}
       </div>
-
-      <div className="mb-6 mt-5 flex items-baseline gap-6">
-        {(["plays", "hours"] as const).map((key) => (
-          <p key={key}>
-            <span className="text-2xl font-extrabold tabular-nums tracking-tight sm:text-4xl">{slice ? n(slice[key]) : "–"}</span>{" "}
-            <span className={`${logo} text-xs uppercase text-muted-foreground sm:text-sm`}>{key}</span>
-          </p>
-        ))}
-      </div>
-
-      {failure ? (
-        <Alert variant="destructive">
-          <AlertTitle>Couldn&apos;t load my charts</AlertTitle>
-          <AlertDescription>{failure.message}. Try again in a bit.</AlertDescription>
-        </Alert>
-      ) : empty ? (
-        <p className="py-10 text-center text-muted-foreground">Nothing played here. Try taking a filter off.</p>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className={`min-w-0 ${filters.tracks ? "hidden lg:block" : ""}`}>
-            <Board title="ARTISTS" items={slice?.topArtists} dim={loading && !!slice} />
-          </div>
-          <div className={`min-w-0 ${filters.tracks ? "" : "hidden lg:block"}`}>
-            <Board title="TRACKS" items={slice?.topTracks} track dim={loading && !!slice} />
-          </div>
-        </div>
-      )}
-    </div>
+    </MotionConfig>
   );
 }

@@ -139,5 +139,6 @@ export function useSlice(query: SliceQuery | null) {
     );
   }, [key, params, version, slices, refresh]);
 
-  return { slice: result?.slice ?? null, loading: !!key && result?.key !== key, error };
+  // sliceKey names the result shown, so a page can replay its entrance when a new one lands
+  return { slice: result?.slice ?? null, sliceKey: result?.key ?? null, loading: !!key && result?.key !== key, error };
 }
