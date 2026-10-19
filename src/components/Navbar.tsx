@@ -1,11 +1,9 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import localFont from "next/font/local";
 import React from "react";
 import { usePathname } from "next/navigation";
-
-const logoFont = localFont({ src: "../../public/font-style.ttf" });
+import { logoFont } from "@/lib/fonts";
 
 const ON_REPEAT_LINKS = [
   { href: "/on-repeat/artists", label: "ARTISTS ON REPEAT" },
