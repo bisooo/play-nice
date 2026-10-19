@@ -230,8 +230,10 @@ export default function StatsHub() {
   ];
   return (
     <div className="container mx-auto max-w-6xl px-4 pb-6 pt-[5.5rem]">
-      <h1 className={`${logo} min-h-[2.8em] text-[1.6rem] uppercase leading-[1.4] sm:min-h-0 sm:text-[2.6rem]`}>
-        {years !== null ? `${NUMBER_WORDS[years] ?? years} years of my listening` : ""}
+      {/* Sized to the viewport so it stays on two lines on phones (the longer line is ~14em) and
+          one line from laptops up (the whole title is ~27.5em) */}
+      <h1 className={`${logo} min-h-[2.8em] text-[min(1.6rem,calc((100vw-2rem)/14.2))] uppercase leading-[1.4] sm:min-h-0 sm:text-[2.6rem] lg:whitespace-nowrap lg:text-[min(2.5rem,calc((100vw-2rem)/28))]`}>
+        {years !== null ? `${NUMBER_WORDS[years] ?? years} years of my listening visualised` : ""}
       </h1>
       {error && <p className="mt-2 text-sm text-red-400">{error.message}. Try again in a bit.</p>}
       <div className="mb-7 mt-4 grid grid-cols-2 gap-x-6 gap-y-2 lg:grid-cols-4">
