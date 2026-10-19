@@ -66,6 +66,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] Phase 1 live (2026-10-18): B ran `npm run history:rebuild` on production from their Mac: PlayFact 80,893 rows in 30.8s, fixed stats in 11.6s (65,500 counted plays, 3,710h, same as the throwaway DB). `/api/history/stats` serves them; `/api/history/top?month=11&v=…` returned Kendrick 325 / 070 Shake 277, CDN MISS 1.56s then HIT 0.19s; no `v` → 409.
 - [ ] Watch: the collector recomputes the fixed stats daily inside its 60s limit (11.6s from B's Mac to Atlas, plus the top-items sync). If a collect run times out, move the stats to their own call.
 - [ ] History stats phase 2: visuals one stat at a time (see below).
+- [x] Collect run failed 2026-10-19 19:18 (500, P2028): the top-tracks transaction passed Prisma's 5s default on a slow Atlas moment. Top-items transactions now get 20s; Prisma query logging (which wrote B's Spotify tokens to Vercel logs) is dev-only. Deployed; manual run green. Not verified: the 20s limit under a real slow moment.
+- [ ] Watch: GitHub fires the hourly schedule only every 2–7h (runs on 2026-10-18/19). Spotify returns the last 50 plays, so a long gap on a heavy day loses plays. If it matters, trigger the collector from elsewhere.
 
 ## History stats (B picked all 17, 2026-10-18)
 

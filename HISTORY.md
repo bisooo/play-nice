@@ -161,3 +161,10 @@ Verified via throwaway Mongo + B's token, `next build && next start`: dropped Pl
 Checks: tsc clean, lint (1 old warning), build ok.
 Not verified: Atlas timings and the first production rebuild (B runs `npm run history:rebuild` after deploy); CDN caching of `/api/history/*` on Vercel.
 Production (same day): B ran `npm run history:rebuild` (PlayFact 30.8s, stats 11.6s from their Mac to Atlas; totals match the throwaway DB). Checked live: `/api/history/stats` 200, `/api/history/top?month=11` with `v` → Kendrick 325, CDN MISS 1.56s then HIT 0.19s, 409 without `v`, artist route 200.
+
+## 2026-10-19 — Collect job 500: transaction timeout and token logging, complete and verified
+
+Bugs found and fixed: the 19:18 scheduled collect returned 500 (`P2028 Transaction already closed` in `prisma.topTrack.createMany`, Vercel runtime logs). The daily top-items sync's short-term tracks transaction passed Prisma's 5s interactive default on a slow Atlas moment (inferred; the 20 runs before were green). Both top-items transactions now get `maxWait` 10s / `timeout` 20s (`src/lib/userManager.ts`). The claim was released and a page load re-synced every list at 19:20. The same logs showed Prisma's `query` log writing B's Spotify access and refresh tokens to Vercel; `src/lib/prisma.ts` now logs queries only in dev (CLAUDE.md rule 11).
+Verified via: throwaway local Mongo repro (a 6s transaction fails with the same P2028 under the default and passes with the new limit); `next start` with a DB query logs 0 query lines vs 2 under `next dev`; deployed `47663c6`, manual collect run green (`fetched 50, added 0`), its Vercel logs have no `prisma:query` lines; `/api/user-insights` lists all updated 2026-10-19 19:20.
+Checks: tsc clean, lint (1 old warning), build ok.
+Not verified: the 20s limit under a real slow Atlas moment (can't be forced); a full local sync (no `SPOTIFY_REFRESH_TOKEN` in this cloud env). Found: the hourly schedule fires only every 2–7h (PLAN.md Open/Next).
