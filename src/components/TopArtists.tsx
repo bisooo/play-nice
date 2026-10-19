@@ -76,7 +76,7 @@ const TopArtists: React.FC<TopArtistsProps> = ({ artists, timeRange }) => {
                         <MoveBadge move={moveOf(artist.spotifyId)} />
                       </div>
                     </div>
-                    <div className="text-center w-full">
+                    <div className="text-center w-full min-h-9">
                       <p
                         className={`text-sm font-medium truncate transition-all duration-300 ${
                           faceUp ? "blur-none" : "blur-sm"
@@ -95,7 +95,7 @@ const TopArtists: React.FC<TopArtistsProps> = ({ artists, timeRange }) => {
                       #{index + 1}
                     </p>
                   </div>
-                  <div className="text-center w-full animate-pulse">
+                  <div className="text-center w-full min-h-9 animate-pulse">
                     <p className="text-sm font-medium truncate blur-sm">
                       Loading name
                     </p>

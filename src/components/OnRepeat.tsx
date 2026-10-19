@@ -51,9 +51,9 @@ export function OnRepeatLayout({ children }: { children: ReactNode }) {
 }
 
 // On laptops the two rows of five tiles are capped to fit the viewport height; the px is
-// everything around the tiles (navbar, time-range tabs, card header, labels, gaps)
-const fitToScreen = (chromePx: number) =>
-  ({ "--tile": `calc((100dvh - ${chromePx}px) / 2)` }) as CSSProperties;
+// everything around the tiles (navbar, time-range tabs, card header, labels, gaps). Artists
+// reserve the same two label lines as tracks, so both pages size their tiles the same
+const fitToScreen = { "--tile": "calc((100dvh - 385px) / 2)" } as CSSProperties;
 
 // Until the preloaded data is in, the lists render as blurred placeholder cards. Keyed by
 // time range so each switch remounts the grid and replays the card flip
@@ -71,7 +71,7 @@ export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
   }
 
   return kind === "artists" ? (
-    <div style={fitToScreen(350)}>
+    <div style={fitToScreen}>
       <TopArtists
         key={timeRange}
         timeRange={timeRange}
@@ -79,7 +79,7 @@ export function OnRepeatList({ kind }: { kind: "artists" | "tracks" }) {
       />
     </div>
   ) : (
-    <div style={fitToScreen(385)}>
+    <div style={fitToScreen}>
       <TopTracks
         key={timeRange}
         timeRange={timeRange}
