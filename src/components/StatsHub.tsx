@@ -114,7 +114,7 @@ function ErasTile({ stats }: { stats: HistoryStats | null }) {
   return (
     <Tile
       name="MY ERAS"
-      soon
+      href="/eras"
       visual={
         stats ? (
           <div className="flex h-full flex-col justify-center gap-1 px-3 pb-2 pt-8 sm:gap-1.5 sm:p-5 sm:pt-9">

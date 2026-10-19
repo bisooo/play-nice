@@ -8,7 +8,7 @@ export type HistoryArtist = { id: string; name: string | null; imageUrl: string 
 export type HistoryTrack = HistoryArtist & { artist: string | null };
 export type HistoryStats = {
   totals: { plays: number; hours: number; artists: number; tracks: number; firstPlay: string; lastPlay: string };
-  eras: { year: number; plays: number; topArtists: HistoryArtist[] }[];
+  eras: { year: number; plays: number; hours: number; topArtists: HistoryArtist[]; topTrack: HistoryTrack | null }[];
   travel: { country: string; plays: number }[];
   streaks: { overall: { days: number; from: string; to: string } };
   daily: Record<string, number>;
