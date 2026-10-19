@@ -71,8 +71,8 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [ ] History stats phase 2: visuals one stat at a time (see below). #1 My Charts live and signed off by B 2026-10-19. #2 My Eras built (B picked Reigns, no hiding); awaiting B's review, then #3 Artist deep dive.
 - [x] Collect run failed 2026-10-19 19:18 (500, P2028): the top-tracks transaction passed Prisma's 5s default on a slow Atlas moment. Top-items transactions now get 20s; Prisma query logging (which wrote B's Spotify tokens to Vercel logs) is dev-only. Deployed; manual run green. Not verified: the 20s limit under a real slow moment.
 - [ ] Watch: GitHub fires the hourly schedule only every 2–7h (runs on 2026-10-18/19). Spotify returns the last 50 plays, so a long gap on a heavy day loses plays. B chose to leave it (2026-10-19); the fix would be an external cron (e.g. cron-job.org) hitting the collector hourly.
-- [ ] Not verified: the hub's Now playing tile with a track playing (no `SPOTIFY_REFRESH_TOKEN` in the cloud env that session, so it showed "Nothing on right now").
-- [ ] Decide: hours differ between the hub (3,710, every listen incl. skips under 30s) and My Charts all time (3,691, counted plays only). Proposed: count every listen's time in `topOfSlice` too (data layer change).
+- [x] Hub Now playing tile: B saw it reflect a live track (2026-10-19); it now polls every 5s while visible (checked with a mocked route: track change, stop, no polling when hidden).
+- [x] Hours: B decided skips stay out of every stat unless it is about skips (2026-10-19). `computeHistoryStats` now counts time and sessions from counted plays only, so the hub matches My Charts (3,691) after the next daily recompute.
 
 ## History stats (B picked all 17, 2026-10-18)
 

@@ -14,6 +14,7 @@ const n = (x: number) => x.toLocaleString("en-US");
 const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen", "Twenty"];
 // Years too thin to stand for anything (the account gaps leave 2016-2017 nearly empty)
 const MIN_YEAR_PLAYS = 500;
+const POLL_MS = 5000;
 const month = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
 
 // Every tile has the same rhythm: a visual, the name (one line), a hook (three lines on phones, two
@@ -186,14 +187,40 @@ function StreaksTile({ stats }: { stats: HistoryStats | null }) {
 function NowPlayingTile() {
   // undefined while loading; null when nothing is playing or Spotify can't be reached
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null | undefined>(undefined);
+  // Polls like the Now playing page: every few seconds while the tab is visible (the route is
+  // CDN-cached for 5s), backing off on 429, and only re-rendering when the track changes
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/spotify/current-track")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => !cancelled && setNowPlaying(body))
-      .catch(() => !cancelled && setNowPlaying(null));
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    let shown: string | null | undefined;
+    const poll = async () => {
+      clearTimeout(timer);
+      let delay = POLL_MS;
+      try {
+        const response = await fetch("/api/spotify/current-track", { cache: "no-store" });
+        if (response.status === 429) delay = Math.max(POLL_MS, (Number(response.headers.get("Retry-After")) || 60) * 1000);
+        const body: NowPlaying | null = response.ok ? await response.json() : null;
+        const key = body?.isPlaying ? body.track?.id ?? null : null;
+        if (!stopped && key !== shown) {
+          shown = key;
+          setNowPlaying(body);
+        }
+      } catch {
+        if (!stopped && shown !== null) {
+          shown = null;
+          setNowPlaying(null);
+        }
+      } finally {
+        if (!stopped && !document.hidden) timer = setTimeout(poll, delay);
+      }
+    };
+    const onVisibilityChange = () => (document.hidden ? clearTimeout(timer) : poll());
+    poll();
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      cancelled = true;
+      stopped = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
   const track = nowPlaying?.isPlaying ? nowPlaying.track : null;
