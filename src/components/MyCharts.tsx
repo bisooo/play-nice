@@ -56,11 +56,9 @@ type Filters = ReturnType<typeof readFilters>;
 
 // A tappable word in the sentence. Set filters are underlined in blue; unset ones are a faint
 // "+ add" chip under it
-function Word({ onClick, children, expanded }: { onClick?: () => void; children: ReactNode; expanded?: boolean }) {
-  const look = "whitespace-nowrap text-blue-400 underline decoration-blue-400/50 decoration-[3px] underline-offset-[7px]";
-  if (!onClick) return <span className={look}>{children}</span>;
+function Word({ onClick, children, expanded }: { onClick: () => void; children: ReactNode; expanded?: boolean }) {
   return (
-    <button type="button" onClick={onClick} aria-expanded={expanded} aria-haspopup="dialog" className={`${look} uppercase hover:decoration-blue-400 focus-visible:outline-none focus-visible:decoration-white`}>
+    <button type="button" onClick={onClick} aria-expanded={expanded} aria-haspopup="dialog" className={`whitespace-nowrap text-blue-400 underline decoration-blue-400/50 decoration-[3px] underline-offset-[7px] uppercase hover:decoration-blue-400 focus-visible:outline-none focus-visible:decoration-white`}>
       {children}
     </button>
   );
@@ -314,9 +312,9 @@ export default function MyCharts() {
       <div className="container mx-auto max-w-6xl px-4 pb-6 pt-[5.5rem]">
         <div className="relative">
           <h1 className={`${logo} text-[1.6rem] uppercase leading-[1.45] sm:text-[2.6rem] sm:leading-[1.35]`}>
-            {/* phones show one list, so the first word switches it; laptops show both */}
+            {/* phones show one list, so the first word switches it; laptops show both, as plain words */}
             <span className="lg:hidden">{sentence(<Word onClick={() => update({ tracks: !filters.tracks })}>{filters.tracks ? "tracks" : "artists"}</Word>)}</span>
-            <span className="hidden lg:inline">{sentence(<Word>artists and tracks</Word>)}</span>
+            <span className="hidden lg:inline">{sentence("artists and tracks")}</span>
           </h1>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {!year && <AddChip onClick={() => toggle("year")}>year</AddChip>}
