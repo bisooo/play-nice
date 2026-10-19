@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { logoFont } from "@/lib/fonts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -181,7 +181,6 @@ function Board({ title, items, track, dim }: { title: string; items: (HistoryArt
 }
 
 export default function MyCharts() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filters = readFilters(searchParams);
@@ -196,8 +195,12 @@ export default function MyCharts() {
   };
   const { slice, loading, error } = useSlice(query);
 
+  // The latest filters, so two quick picks build on each other before the URL catches up
+  const latest = useRef(filters);
+  latest.current = filters;
   const update = (changes: Partial<Filters>) => {
-    const next = { ...filters, ...changes };
+    const next = { ...latest.current, ...changes };
+    latest.current = next;
     const params = new URLSearchParams();
     if (next.tracks) params.set("kind", "tracks");
     if (next.year) params.set("year", String(next.year));
@@ -205,7 +208,9 @@ export default function MyCharts() {
     if (next.time) params.set("time", next.time);
     if (next.place) params.set("place", next.place);
     const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // Native pushState updates useSearchParams without a server round trip (Next 14.1+), and
+    // each pick is a history entry, so back steps through them
+    window.history.pushState(null, "", qs ? `${pathname}?${qs}` : pathname);
   };
   const toggle = (filter: Filter) => setOpen((current) => (current === filter ? null : filter));
   const close = () => setOpen(null);
