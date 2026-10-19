@@ -70,7 +70,8 @@ export async function computeHistoryStats(prisma, userId, now = new Date()) {
     aggregate(prisma, userId, [counted, { $unwind: '$artistIds' }, { $group: { _id: { a: '$artistIds', d: '$date' }, plays: { $sum: 1 } } }]),
     aggregate(prisma, userId, [counted, { $sort: { playedAt: 1 } }, { $unwind: '$artistIds' }, { $group: { _id: '$artistIds', date: { $first: '$date' }, trackId: { $first: '$trackId' } } }]),
     aggregate(prisma, userId, [counted, { $group: { _id: { t: '$trackId', d: '$date' }, plays: { $sum: 1 } } }]),
-    aggregate(prisma, userId, [{ $group: { _id: '$year', starts: { $sum: 1 }, plays: { $sum: { $cond: ['$counted', 1, 0] } }, ms: { $sum: '$listenedMs' } } }]),
+    // Time listened counts counted plays only: skips stay out of every stat but the skip rate
+    aggregate(prisma, userId, [{ $group: { _id: '$year', starts: { $sum: 1 }, plays: { $sum: { $cond: ['$counted', 1, 0] } }, ms: { $sum: { $cond: ['$counted', '$listenedMs', 0] } } } }]),
     aggregate(prisma, userId, [{ $unwind: '$artistIds' }, { $group: { _id: '$artistIds', starts: { $sum: 1 }, plays: { $sum: { $cond: ['$counted', 1, 0] } } } }, { $match: { starts: { $gte: SKIP_MIN_STARTS } } }]),
     aggregate(prisma, userId, [counted, { $group: { _id: { a: { $first: '$artistIds' }, y: '$year' }, plays: { $sum: 1 } } }]),
     aggregate(prisma, userId, [counted, { $match: { releaseYear: { $ne: null } } }, { $group: { _id: { y: '$year', r: '$releaseYear' }, plays: { $sum: 1 } } }]),
@@ -114,10 +115,11 @@ export async function computeHistoryStats(prisma, userId, now = new Date()) {
     if (dayDiff(activeDates[i - 1], activeDates[i]) > ACCOUNT_GAP_DAYS) gaps.push({ from: activeDates[i - 1], to: activeDates[i] });
   }
 
-  // Sessions: plays less than 30 min apart (start of a play = end minus time listened)
+  // Sessions: counted plays less than 30 min apart (start of a play = end minus time listened)
   const sessions = [];
   let session = null;
   for (const p of plays) {
+    if (!p.counted) continue;
     const end = p.playedAt.getTime();
     const start = end - p.listenedMs;
     if (!session || start - session.end > SESSION_BREAK_MS) {
