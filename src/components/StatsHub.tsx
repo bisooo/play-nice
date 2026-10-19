@@ -48,10 +48,14 @@ const Ex = ({ children }: { children: ReactNode }) => (
 const Placeholder = () => <div className="h-full w-full animate-pulse bg-white/[0.04]" />;
 
 function ChartsTile({ stats }: { stats: HistoryStats | null }) {
-  // The sample: my nights in my busiest year
-  const year = stats ? [...stats.eras].sort((a, b) => b.plays - a.plays)[0]?.year : undefined;
-  const { slice } = useSlice(year ? { year, hours: [0, 5] } : null);
+  // The sample: this month across every year, set against the all-time No. 1
+  const thisMonth = new Date().getMonth() + 1;
+  const monthName = new Date(2000, thisMonth - 1).toLocaleString("en-US", { month: "long" });
+  const { slice } = useSlice(stats ? { month: thisMonth } : null);
+  const { slice: allTime } = useSlice(stats ? {} : null);
   const top = slice?.topArtists.slice(0, 3);
+  const leader = allTime?.topArtists[0]?.name;
+  const monthLeader = top?.[0]?.name;
   return (
     <Tile
       name="MY CHARTS"
@@ -60,7 +64,7 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
         top ? (
           <div className="flex h-full flex-col justify-center gap-2 bg-gradient-to-br from-blue-500/20 via-transparent to-transparent p-3 sm:p-5">
             <p className={`${logo} text-[11px] uppercase leading-[1.7] sm:text-base sm:leading-[1.6]`}>
-              My top <Ex>artists</Ex> <Ex>at night</Ex> in <Ex>{year}</Ex>
+              My top <Ex>artists</Ex> every <Ex>{monthName}</Ex>
             </p>
             <div className="space-y-1 sm:space-y-1.5">
               {top.map((artist, i) => (
@@ -77,7 +81,13 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
           </div>
         ) : <Placeholder />
       }
-      hook={top?.[0] ? `${top[0].name} owned my nights in ${year}.` : ""}
+      hook={
+        leader && monthLeader
+          ? leader === monthLeader
+            ? `${leader} leads all time, and every ${monthName} too.`
+            : `${leader} leads all time, but my ${monthName}s belong to ${monthLeader}.`
+          : ""
+      }
       inside="My top 10 for any year, month, hour or place."
     />
   );
@@ -194,7 +204,7 @@ function NowPlayingTile() {
       visual={
         <div className="relative h-full bg-gradient-to-br from-orange-500/40 via-fuchsia-500/20 to-black">
           <div className="absolute left-1/2 top-1/2 h-[62%] w-[62%] -translate-x-1/2 -translate-y-1/2">
-            <Image src={track?.imageUrl || "/play-nice-color.png"} alt="" fill sizes="200px" className={`object-cover ${track ? "rounded-md shadow-2xl" : "rounded-full opacity-80"}`} unoptimized={!track} />
+            <Image src={track?.imageUrl || "/play-nice-color.png"} alt="" fill sizes="200px" className={track ? "rounded-md object-cover shadow-2xl" : "object-contain opacity-80"} unoptimized={!track} />
           </div>
           {track && (
             <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold sm:text-xs">

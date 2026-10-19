@@ -246,17 +246,20 @@ export default function MyCharts() {
 
   // "My top artists every November at night in Egypt are…"
   const { year, month, time, place } = filters;
-  const when = year && month ? `${MONTHS[month - 1]} ${year}` : year ? String(year) : month ? `every ${MONTHS[month - 1]}` : null;
   const narrowed = Boolean(year || month || time || place);
   const past = year !== undefined && year < new Date().getFullYear();
+  // Month and year are separate words, so either can change without clearing the other
+  const monthWord = month && <Word onClick={() => toggle("month")} expanded={open === "month"}>{MONTHS[month - 1]}</Word>;
+  const yearWord = year && <Word onClick={() => toggle("year")} expanded={open === "year"}>{year}</Word>;
   const sentence = (kind: ReactNode) => (
     <>
       My top {kind}
-      {when ? (
-        <>
-          {" "}{year ? "in " : ""}
-          <Word onClick={() => toggle(year ? "year" : "month")} expanded={open === "year" || open === "month"}>{when}</Word>
-        </>
+      {year && month ? (
+        <> in {monthWord} {yearWord}</>
+      ) : year ? (
+        <> in {yearWord}</>
+      ) : month ? (
+        <> every {monthWord}</>
       ) : !narrowed ? (
         <> of <Word onClick={() => toggle("year")} expanded={open === "year"}>all time</Word></>
       ) : null}
