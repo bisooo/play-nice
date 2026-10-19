@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import CurrentlyPlaying from "../components/CurrentlyPlaying";
-import { BackgroundLines } from "../components/BackgroundLines";
+import CurrentlyPlaying from "@/components/CurrentlyPlaying";
+import { BackgroundLines } from "@/components/BackgroundLines";
 import {
   Accordion,
   AccordionContent,
@@ -10,7 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export default function Home() {
+export default function NowPlayingPage() {
   const [backgroundColors, setBackgroundColors] = useState<string[]>([
     "rgba(128, 128, 128, 0.1)",
   ]);
