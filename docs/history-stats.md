@@ -33,7 +33,7 @@ Fixed = `GET /api/history/stats` → `stats.<key>` (recomputed daily). Interacti
 | # | Stat | Source |
 |---|---|---|
 | 1 | Top of any slice (built as My Charts, `/charts`) | `/api/history/top?year&month&from&to&country` |
-| 2, 17 | Eras, hours per year | `eras` (per year: plays, hours, skip rate, top 5 artists, top track) |
+| 2, 17 | Eras (#2 built as My Eras, `/eras`), hours per year | `eras` (per year: plays, hours, skip rate, top 5 artists, top track) |
 | 3 | Artist deep dive | `/api/history/artist/[id]` (first play + via, per year, peak month, top tracks, streak, by hour) |
 | 4 | Genre mix | `genres` (per year: top 10 genres with share and top 3 artists) |
 | 5 | Comebacks | `comebacks` |
