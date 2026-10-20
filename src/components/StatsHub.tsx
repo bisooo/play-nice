@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { logoFont } from "@/lib/fonts";
-import { useHistoryStats, useSlice } from "@/components/History";
+import { useArtist, useHistoryStats, useSlice } from "@/components/History";
 import type { HistoryStats } from "@/components/History";
 import { NowPlaying } from "@/types/spotify";
 
@@ -57,6 +57,8 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
   const top = slice?.topArtists.slice(0, 3);
   const leader = allTime?.topArtists[0]?.name;
   const monthLeader = top?.[0]?.name;
+  // A tie at the top of the month: name no single owner
+  const tiedWithLeader = !!top && top.length > 1 && top[1].plays === top[0].plays && top.slice(0, 2).some((a) => a.name === leader);
   return (
     <Tile
       name="CHARTS"
@@ -84,7 +86,9 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
       }
       hook={
         leader && monthLeader
-          ? leader === monthLeader
+          ? tiedWithLeader
+            ? `${leader} leads all time, and ties for my ${monthName}s.`
+            : leader === monthLeader
             ? `${leader} leads all time, and every ${monthName} too.`
             : `${leader} leads all time, but my ${monthName}s belong to ${monthLeader}.`
           : ""
@@ -137,49 +141,40 @@ function ErasTile({ stats }: { stats: HistoryStats | null }) {
   );
 }
 
-function StreaksTile({ stats }: { stats: HistoryStats | null }) {
-  const streak = stats?.streaks.overall;
-  // The run on a calendar, from the Monday four weeks before it to three weeks after
-  const days: { date: string; plays: number }[] = [];
-  if (stats && streak) {
-    const day = new Date(`${streak.from}T00:00:00Z`);
-    day.setUTCDate(day.getUTCDate() - 28 - ((day.getUTCDay() + 6) % 7));
-    const end = new Date(`${streak.to}T00:00:00Z`);
-    end.setUTCDate(end.getUTCDate() + 21);
-    for (; day <= end; day.setUTCDate(day.getUTCDate() + 1)) {
-      const date = day.toISOString().slice(0, 10);
-      days.push({ date, plays: stats.daily[date] ?? 0 });
-    }
-  }
-  const months = days.filter((d) => d.date.endsWith("-15")).map((d) => month(d.date).slice(0, 3).toUpperCase());
+function DeepDiveTile() {
+  // The sample: my all-time No. 1, one fact turned over and two still face down
+  const { slice } = useSlice({});
+  const top = slice?.topArtists[0];
+  const { artist: dive } = useArtist(top?.id ?? null);
+  const streak = dive?.longestStreak;
   return (
     <Tile
-      name="STREAKS"
-      soon
+      name="DEEP DIVE"
+      href="/deep-dive"
       visual={
-        streak ? (
-          <div className="flex h-full flex-col justify-center p-3 sm:p-5">
-            <p className={`${logo} mb-2 text-[11px] sm:text-base`}><span className="text-blue-400">{streak.days} DAYS</span> IN A ROW</p>
-            <div className="grid grid-flow-col grid-rows-7 gap-[2px] sm:gap-[3px]">
-              {days.map((d) => {
-                const inRun = d.date >= streak.from && d.date <= streak.to;
-                return (
-                  <span
-                    key={d.date}
-                    className={`aspect-square rounded-[1px] ${!d.plays ? "bg-white/[0.04] outline outline-1 outline-red-400/60" : inRun ? "bg-blue-500" : "bg-white/15"}`}
-                    style={inRun ? { opacity: 0.45 + Math.min(d.plays, 80) / 145 } : undefined}
-                  />
-                );
-              })}
+        dive ? (
+          <div className="flex h-full flex-col justify-center gap-1.5 bg-gradient-to-br from-blue-500/20 via-transparent to-transparent p-3 sm:gap-2 sm:p-5">
+            <div className="flex items-center gap-2">
+              <div className="relative h-6 w-6 shrink-0 sm:h-8 sm:w-8">
+                <Image src={dive.artist.imageUrl || "/placeholder.jpg"} alt="" fill sizes="32px" className="rounded-full object-cover" />
+              </div>
+              <p className={`${logo} truncate text-[11px] uppercase sm:text-base`}>{dive.artist.name}</p>
             </div>
-            <div className={`${logo} mt-1.5 flex justify-between text-[9px] text-muted-foreground sm:text-xs`}>
-              {months.map((m) => <span key={m}>{m}</span>)}
+            <div className="rounded border bg-card px-2 py-1.5 sm:px-3 sm:py-2">
+              <p className={`${logo} text-[8px] text-muted-foreground sm:text-[10px]`}>HOW I FOUND THEM</p>
+              <p className="truncate text-[11px] font-bold sm:text-sm">{dive.firstPlayed.via.name?.replace(/ \((feat|with)[^)]*\)/i, "")}</p>
             </div>
+            {["PEAK MONTH", "TOP SONG"].map((question) => (
+              <div key={question} className="flex items-center justify-between rounded border bg-black px-2 py-1.5 sm:px-3 sm:py-2">
+                <p className={`${logo} text-[9px] sm:text-xs`}>{question}</p>
+                <p className={`${logo} text-[8px] text-blue-400 sm:text-[10px]`}>TAP</p>
+              </div>
+            ))}
           </div>
         ) : <Placeholder />
       }
-      hook={streak ? `Not one day off, ${month(streak.from)} to ${month(streak.to)} ${streak.to.slice(0, 4)}.` : ""}
-      inside="My longest daily listening runs."
+      hook={dive && streak && streak.days > 1 ? `${dive.artist.name}, ${streak.days} days in a row in ${month(streak.to)} ${streak.to.slice(0, 4)}.` : ""}
+      inside="Any of my artists, one fact at a time."
     />
   );
 }
@@ -274,7 +269,7 @@ export default function StatsHub() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <ChartsTile stats={stats} />
         <ErasTile stats={stats} />
-        <StreaksTile stats={stats} />
+        <DeepDiveTile />
         <NowPlayingTile />
       </div>
     </div>

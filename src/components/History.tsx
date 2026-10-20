@@ -15,6 +15,18 @@ export type HistoryStats = {
 };
 export type Slice = { plays: number; hours: number; topArtists: HistoryArtist[]; topTracks: HistoryTrack[] };
 export type SliceQuery = { year?: number; month?: number; hours?: [number, number]; country?: string };
+export type ArtistDive = {
+  artist: { id: string; name: string | null; imageUrl: string | null };
+  plays: number;
+  hours: number;
+  firstPlayed: { date: string; via: Omit<HistoryTrack, "plays"> };
+  lastPlayed: string;
+  perYear: { year: number; plays: number }[];
+  peakMonth: { year: number; month: number; plays: number };
+  topTracks: HistoryTrack[];
+  longestStreak: { days: number; from: string; to: string };
+  byHour: number[];
+};
 
 type State = { version: string; stats: HistoryStats } | null;
 
@@ -22,7 +34,7 @@ const HistoryContext = createContext<{
   state: State;
   error: Error | null;
   load: () => void;
-  slices: React.MutableRefObject<Map<string, Promise<Slice>>>;
+  slices: React.MutableRefObject<Map<string, Promise<unknown>>>;
   refresh: (version: string) => void;
 } | null>(null);
 
@@ -33,7 +45,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(null);
   const [error, setError] = useState<Error | null>(null);
   const started = useRef(false);
-  const slices = useRef(new Map<string, Promise<Slice>>());
+  const slices = useRef(new Map<string, Promise<unknown>>());
   const requestId = useRef(0);
 
   const fetchStats = useCallback(async () => {
@@ -95,41 +107,40 @@ export function sliceParams({ year, month, hours, country }: SliceQuery) {
   return params;
 }
 
-// Top artists and tracks for a slice (stat #1). Keeps showing the previous result while a new one
-// loads, so the lists don't blank out between filters.
-export function useSlice(query: SliceQuery | null) {
+// One interactive result (a slice, an artist): fetched with the current data version, cached in
+// memory by URL + version, so going back to one is instant. Keeps showing the previous result while
+// a new one loads, so pages don't blank out between picks. A 409 means new plays were prepared.
+function useHistoryQuery<T>(url: string | null, notFound?: string) {
   const { version } = useHistoryStats();
-  const { slices, refresh } = useHistoryContext();
-  const [result, setResult] = useState<{ key: string; slice: Slice } | null>(null);
+  const { slices: results, refresh } = useHistoryContext();
+  const [result, setResult] = useState<{ key: string; value: T } | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const requestId = useRef(0);
-  const params = query && sliceParams(query).toString();
-  const key = version && params !== null ? `${params}|${version}` : null;
+  const key = version && url !== null ? `${url}|${version}` : null;
 
   useEffect(() => {
-    if (!key || params === null || !version) return;
+    if (!key || url === null || !version) return;
     const id = ++requestId.current;
-    let promise = slices.current.get(key);
+    let promise = results.current.get(key) as Promise<T> | undefined;
     if (!promise) {
       promise = (async () => {
-        const qs = new URLSearchParams(params);
-        qs.set("v", version);
-        const response = await fetch(`/api/history/top?${qs}`);
+        const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}v=${version}`);
         if (response.status === 409) {
           const body = await response.json();
           refresh(body.version);
           throw new Error("stale");
         }
-        if (!response.ok) throw new Error("Couldn't load these charts");
+        if (response.status === 404 && notFound) throw new Error(notFound);
+        if (!response.ok) throw new Error("Couldn't load this");
         return response.json();
       })();
-      slices.current.set(key, promise);
-      promise.catch(() => slices.current.delete(key));
+      results.current.set(key, promise as Promise<never>);
+      promise.catch(() => results.current.delete(key));
     }
     promise.then(
-      (slice) => {
+      (value) => {
         if (id === requestId.current) {
-          setResult({ key, slice });
+          setResult({ key, value });
           setError(null);
         }
       },
@@ -137,8 +148,27 @@ export function useSlice(query: SliceQuery | null) {
         if (id === requestId.current && err.message !== "stale") setError(err);
       },
     );
-  }, [key, params, version, slices, refresh]);
+  }, [key, url, version, results, refresh, notFound]);
 
-  // sliceKey names the result shown, so a page can replay its entrance when a new one lands
-  return { slice: result?.slice ?? null, sliceKey: result?.key ?? null, loading: !!key && result?.key !== key, error };
+  // resultKey names the result shown, so a page can replay its entrance when a new one lands
+  return { value: result?.value ?? null, resultKey: result?.key ?? null, loading: !!key && result?.key !== key, error };
+}
+
+// Top artists and tracks for a slice (stat #1)
+export function useSlice(query: SliceQuery | null) {
+  const { value, resultKey, loading, error } = useHistoryQuery<Slice>(query && `/api/history/top?${sliceParams(query)}`);
+  return { slice: value, sliceKey: resultKey, loading, error: error && new Error(error.message === "Couldn't load this" ? "Couldn't load these charts" : error.message) };
+}
+
+// One artist's history (stat #3)
+export function useArtist(id: string | null) {
+  const { value, resultKey, loading, error } = useHistoryQuery<ArtistDive>(id && `/api/history/artist/${encodeURIComponent(id)}`, "No plays for this artist");
+  return { artist: value, artistKey: resultKey, loading, error };
+}
+
+// Every artist I've played as [id, name, plays], most played first (stat #3's search). Only
+// fetched once a page asks for it.
+export function useArtistList(enabled: boolean) {
+  const { value, error } = useHistoryQuery<[string, string, number][]>(enabled ? "/api/history/artists" : null);
+  return { list: value, error };
 }
