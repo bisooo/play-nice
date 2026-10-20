@@ -69,7 +69,7 @@ Not agreed yet; proposed order is Scope 1 → 5 above.
 - [x] History stats phase 1, data layer (2026-10-18): PlayFact + daily fixed stats + interactive routes, verified on a throwaway DB against raw plays.
 - [x] Phase 1 live (2026-10-18): B ran `npm run history:rebuild` on production from their Mac: PlayFact 80,893 rows in 30.8s, fixed stats in 11.6s (65,500 counted plays, 3,710h, same as the throwaway DB). `/api/history/stats` serves them; `/api/history/top?month=11&v=…` returned Kendrick 325 / 070 Shake 277, CDN MISS 1.56s then HIT 0.19s; no `v` → 409.
 - [ ] Watch: the collector recomputes the fixed stats daily inside its 60s limit (11.6s from B's Mac to Atlas, plus the top-items sync). If a collect run times out, move the stats to their own call.
-- [ ] History stats phase 2: visuals one stat at a time (see below). #1 My Charts live and signed off by B 2026-10-19. #2 My Eras live. #3 Deep Dive built (Flip picked, search added); awaiting B's review. Next: #4.
+- [ ] History stats phase 2: visuals one stat at a time (see below). #1 My Charts live and signed off by B 2026-10-19. #2 My Eras live. #3 Deep Dive live and signed off 2026-10-20. #4 The Egyptian turn built (stream picked, genre groups reviewed by B); awaiting B's review and push. Next: #5 Comebacks.
 - [x] Collect run failed 2026-10-19 19:18 (500, P2028): the top-tracks transaction passed Prisma's 5s default on a slow Atlas moment. Top-items transactions now get 20s; Prisma query logging (which wrote B's Spotify tokens to Vercel logs) is dev-only. Deployed; manual run green. Not verified: the 20s limit under a real slow moment.
 - [ ] Watch: GitHub fires the hourly schedule only every 2–7h (runs on 2026-10-18/19). Spotify returns the last 50 plays, so a long gap on a heavy day loses plays. B chose to leave it (2026-10-19); the fix would be an external cron (e.g. cron-job.org) hitting the collector hourly.
 - [x] Hub Now playing tile: B saw it reflect a live track (2026-10-19); it now polls every 5s while visible (checked with a mocked route: track change, stop, no polling when hidden).
@@ -95,6 +95,7 @@ Notes from B for phase 2 (2026-10-18):
 - Use the logo font for big text (headlines, sentence filters, tile names, number labels) for contrast; numbers stay in Inter (heavy for big ones), since the logo font's stylised digits misread (65,500 looked like 655,5000).
 - #1 look (2026-10-19): the headline is the filter, a sentence with tappable words ("My top artists every November are…") and "+ year / time of day / place" add-ons; ranked lists with a bar and "N plays"; artists and tracks side by side on laptop. No hiding for #1.
 - #2 look (2026-10-19): Reigns, picked over a timeline and a yearbook as the most minimal; extra stats (hours, top 5, song of the year) appear on tap, not up front. No hiding.
+- #4 look (2026-10-20): Stream, a smooth stacked area of nine pastel genre groups with Arabic on the floor; chips and bands tappable, year labels tappable; panel shows the group's share, a year-by-year bar row, top 3 artists and the Spotify genres inside it with sparklines. No hiding. Hub now has five tiles (GENRES added before Now playing); #5 fills the row.
 - #3 look (2026-10-20): Flip, picked over a guess-first quiz and a chapter-by-chapter story: facts face down like On Repeat's cards. Hub tiles only for built stats (Streaks tile removed until #13). Reveal state is per visit.
 
 ## Future ideas
@@ -102,7 +103,7 @@ Notes from B for phase 2 (2026-10-18):
 - (B, 2026-10-16) Others onboard themselves: an easy way to mint their own refresh token and request their Spotify extended history export, then an all-time stats dashboard once it arrives. Blocked by dev mode's 5-user cap (allow-list by email, no API); build it for B first.
 
 - Rank-change dashboard (deltas across time ranges, "all-time staples").
-- Genre map over time (if artist `genres` still returned; verify).
+- (B, 2026-10-20) More descriptive genres in The Egyptian turn as a general pass, not just a few fixes: e.g. hip hop producers, lo-fi, instrumental tapes/artists are missing. Today's groups and hand tags live in `src/lib/genreGroups.mjs`.
 - Listening clock heatmap from recently-played timestamps.
 - Sampler replacement via third-party audio features by ISRC, or LLM "dig deeper" suggestions resolved via search.
 - Shareable OG image cards in the extracted album palette.

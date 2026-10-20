@@ -6,9 +6,17 @@ import type { ReactNode } from "react";
 // The parts of GET /api/history/stats the pages read (docs/history-stats.md has the full list)
 export type HistoryArtist = { id: string; name: string | null; imageUrl: string | null; plays: number };
 export type HistoryTrack = HistoryArtist & { artist: string | null };
+// #4: shares are of the year's plays; genres are the top Spotify genres inside a group. groups is
+// missing in stats stored before the genre groups (they come back on the next daily recompute).
+export type GenreYear = {
+  year: number;
+  plays: number;
+  groups?: { key: string; share: number; topArtists: HistoryArtist[]; genres: Record<string, number> }[];
+};
 export type HistoryStats = {
   totals: { plays: number; hours: number; artists: number; tracks: number; firstPlay: string; lastPlay: string };
   eras: { year: number; plays: number; hours: number; topArtists: HistoryArtist[]; topTrack: HistoryTrack | null }[];
+  genres: GenreYear[];
   travel: { country: string; plays: number }[];
   streaks: { overall: { days: number; from: string; to: string } };
   daily: Record<string, number>;

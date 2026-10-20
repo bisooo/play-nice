@@ -7,6 +7,7 @@ import Link from "next/link";
 import { logoFont } from "@/lib/fonts";
 import { useArtist, useHistoryStats, useSlice } from "@/components/History";
 import type { HistoryStats } from "@/components/History";
+import { GROUPS, arabicShare, bandPaths, genreYears, pct } from "@/components/GenreTurn";
 import { NowPlaying } from "@/types/spotify";
 
 const logo = logoFont.className;
@@ -190,6 +191,40 @@ function DeepDiveTile() {
   );
 }
 
+function GenresTile({ stats }: { stats: HistoryStats | null }) {
+  // The whole stream in miniature, with the Arabic rise called out
+  const years = stats ? genreYears(stats) : null;
+  const first = years?.[0];
+  const last = years?.[years.length - 1];
+  const paths = years ? bandPaths(years, 200, 200, 0, 200, 34).paths : null;
+  return (
+    <Tile
+      name="GENRES"
+      href="/genres"
+      visual={
+        years && first && last && paths ? (
+          <Loaded>
+          <div className="relative h-full">
+            <svg viewBox="0 0 200 200" preserveAspectRatio="none" className="h-full w-full" aria-hidden>
+              {paths.map((d, i) => <path key={GROUPS[i].key} d={d} fill={GROUPS[i].color} stroke="#000" strokeWidth={1} />)}
+            </svg>
+            <p className={`${logo} absolute left-2 top-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white sm:left-3 sm:top-3 sm:text-xs`}>
+              ARABIC <span className="font-sans font-bold tabular-nums">{pct(arabicShare(first))} → {pct(arabicShare(last))}</span>
+            </p>
+          </div>
+          </Loaded>
+        ) : <Placeholder />
+      }
+      hook={
+        first && last
+          ? `Arabic went from ${pct(arabicShare(first))} of my plays in ${first.year} to ${pct(arabicShare(last))} in ${last.year}.`
+          : stats ? "My genre mix lands after tonight’s update." : ""
+      }
+      inside="My genre mix, year by year."
+    />
+  );
+}
+
 function NowPlayingTile() {
   // undefined while loading; null when nothing is playing or Spotify can't be reached
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null | undefined>(undefined);
@@ -286,6 +321,7 @@ export default function StatsHub() {
         <ChartsTile stats={stats} />
         <ErasTile stats={stats} />
         <DeepDiveTile />
+        <GenresTile stats={stats} />
         <NowPlayingTile />
       </div>
     </div>

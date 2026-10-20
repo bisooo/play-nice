@@ -6,6 +6,8 @@
 // run per request on PlayFact. Counted play = 30s or more; plays count for every artist on a
 // track; dates are Europe/Prague.
 
+import { GENRE_GROUPS, genreSplit } from './genreGroups.mjs';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DISCOVERY_MIN_PLAYS = 20; // an artist counts as "found" once they reach this many plays
 const COMEBACK_MIN_PLAYS = 50;
@@ -141,25 +143,32 @@ export async function computeHistoryStats(prisma, userId, now = new Date()) {
     topTrack: top(yearTracks.filter(r => r._id.y === y._id).map(r => ({ id: r._id.t, plays: r.plays })), 1)[0] ?? null,
   }));
 
-  // #4 genre mix per year, from each play's main artist (2026: Spotify still returns genres)
-  const genreArtists = await prisma.artist.findMany({ where: { id: { in: [...new Set(primaryYears.map(r => r._id.a))] } }, select: { id: true, genres: true } });
+  // #4 genre mix per year, from each play's main artist split across its genre groups (genreGroups.mjs)
+  const genreArtists = await prisma.artist.findMany({ where: { id: { in: [...new Set(primaryYears.map(r => r._id.a).filter(Boolean))] } }, select: { id: true, genres: true } });
   const genresOf = new Map(genreArtists.map(a => [a.id, a.genres]));
   const genres = yearRows.map(({ _id: year }) => {
     const rows = primaryYears.filter(r => r._id.y === year);
     const total = rows.reduce((sum, r) => sum + r.plays, 0);
-    const byGenre = new Map();
+    const groups = new Map(GENRE_GROUPS.map(g => [g.key, { plays: 0, artists: new Map(), genres: new Map() }]));
     for (const r of rows) {
-      for (const g of genresOf.get(r._id.a) ?? []) {
-        if (!byGenre.has(g)) byGenre.set(g, { genre: g, plays: 0, artists: [] });
-        const entry = byGenre.get(g);
-        entry.plays += r.plays;
-        entry.artists.push({ id: r._id.a, plays: r.plays });
+      for (const { group, genre, weight } of genreSplit(r._id.a, genresOf.get(r._id.a) ?? [])) {
+        const entry = groups.get(group);
+        const plays = r.plays * weight;
+        entry.plays += plays;
+        if (r._id.a) entry.artists.set(r._id.a, (entry.artists.get(r._id.a) ?? 0) + plays);
+        if (genre) entry.genres.set(genre, (entry.genres.get(genre) ?? 0) + plays);
       }
     }
+    const share = plays => (total ? plays / total : 0);
     return {
       year,
       plays: total,
-      genres: top([...byGenre.values()], 10).map(g => ({ genre: g.genre, plays: g.plays, share: total ? g.plays / total : 0, topArtists: top(g.artists, 3) })),
+      groups: [...groups].map(([key, g]) => ({
+        key,
+        share: share(g.plays),
+        topArtists: top([...g.artists].map(([id, plays]) => ({ id, plays: Math.round(plays) })), 3),
+        genres: Object.fromEntries(top([...g.genres].map(([genre, plays]) => ({ genre, plays })), 8).map(x => [x.genre, share(x.plays)])),
+      })),
     };
   });
 
@@ -243,7 +252,7 @@ export async function computeHistoryStats(prisma, userId, now = new Date()) {
   const L = await labels(prisma, {
     artistIds: [
       ...eras.flatMap(e => e.topArtists.map(a => a.id)),
-      ...genres.flatMap(y => y.genres.flatMap(g => g.topArtists.map(a => a.id))),
+      ...genres.flatMap(y => y.groups.flatMap(g => g.topArtists.map(a => a.id))),
       ...comebacks.map(a => a.id),
       ...discovery.flatMap(y => y.biggest.map(a => a.id)),
       ...Object.values(seasonal).flat().map(a => a.id),
@@ -275,7 +284,7 @@ export async function computeHistoryStats(prisma, userId, now = new Date()) {
       accountGaps: gaps,
     },
     eras: eras.map(e => ({ ...e, topArtists: e.topArtists.map(withArtist), topTrack: e.topTrack && withTrack(e.topTrack) })),
-    genres: genres.map(y => ({ ...y, genres: y.genres.map(g => ({ ...g, topArtists: g.topArtists.map(withArtist) })) })),
+    genres: genres.map(y => ({ ...y, groups: y.groups.map(g => ({ ...g, topArtists: g.topArtists.map(withArtist) })) })),
     comebacks: comebacks.map(withArtist),
     forgotten: forgotten.map(withTrack),
     discovery: discovery.map(y => ({ ...y, biggest: y.biggest.map(a => ({ ...withArtist(a), via: L.track(a.via) })) })),

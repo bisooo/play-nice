@@ -35,7 +35,7 @@ Fixed = `GET /api/history/stats` → `stats.<key>` (recomputed daily). Interacti
 | 1 | Top of any slice (built as My Charts, `/charts`) | `/api/history/top?year&month&from&to&country` |
 | 2, 17 | Eras (#2 built as My Eras, `/eras`), hours per year | `eras` (per year: plays, hours, skip rate, top 5 artists, top track) |
 | 3 | Artist deep dive (built as Deep Dive, `/deep-dive`) | `/api/history/artist/[id]` (first play + via, per year, peak month, top tracks, streak, by hour); search: `/api/history/artists` (every artist with counted plays as `[id, name, plays]`, ~100 KB gzipped, fetched when search opens) |
-| 4 | Genre mix | `genres` (per year: top 10 genres with share and top 3 artists) |
+| 4 | Genre mix (built as The Egyptian turn, `/genres`) | `genres` (per year: nine groups with share, top 3 artists and their top 8 Spotify genres as shares of the year). Groups, hand tags and B's review picks: `src/lib/genreGroups.mjs`. Each play's main artist splits equally across their specific genres (generic "hip hop"/"rap" only when nothing else), each genre goes to the first matching group, and artists Spotify gives no genres get hand Spotify-style tags (top 150 reviewed by B, 2026-10-20), so a year adds up to 100% |
 | 5 | Comebacks | `comebacks` |
 | 6 | Forgotten favourites | `forgotten` (not played for 1y+, 30+ plays; page filters 2y/3y by `lastPlayed`) |
 | 7 | Discovery rate | `discovery` (per year: count, biggest 5 finds with the track that introduced them) |
