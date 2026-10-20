@@ -16,6 +16,7 @@ import type { ArtistDive } from "@/components/History";
 
 const logo = logoFont.className;
 const n = (x: number) => x.toLocaleString("en-US");
+const plays = (x: number) => `${n(x)} ${x === 1 ? "play" : "plays"}`;
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const day = (date: string, options: Intl.DateTimeFormatOptions) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", { ...options, timeZone: "UTC" });
 const clean = (name: string | null) => (name ?? "").replace(/ \((feat|with)[^)]*\)/i, "");
@@ -38,15 +39,15 @@ function factsOf(dive: ArtistDive): Fact[] {
   const top = dive.topTracks[0];
   return [
     { key: "found", question: "How I found them", answer: clean(dive.firstPlayed.via.name), detail: day(dive.firstPlayed.date, { day: "numeric", month: "long", year: "numeric" }), image: dive.firstPlayed.via.imageUrl },
-    { key: "year", question: "Biggest year", answer: String(best.year), detail: `${n(best.plays)} plays` },
-    { key: "month", question: "Peak month", answer: `${MONTHS[dive.peakMonth.month - 1]} ${dive.peakMonth.year}`, detail: `${n(dive.peakMonth.plays)} plays in one month` },
+    { key: "year", question: "Biggest year", answer: String(best.year), detail: plays(best.plays) },
+    { key: "month", question: "Peak month", answer: `${MONTHS[dive.peakMonth.month - 1]} ${dive.peakMonth.year}`, detail: `${plays(dive.peakMonth.plays)} in one month` },
     {
       key: "streak",
       question: "Longest streak",
       answer: streak.days > 1 ? `${streak.days} days in a row` : "One day at a time",
       detail: streak.days > 1 ? `${day(streak.from, sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" })} to ${day(streak.to, { day: "numeric", month: "short", year: "numeric" })}` : "never two days running",
     },
-    { key: "song", question: "Most played song", answer: clean(top?.name ?? ""), detail: top ? `${top.artist} · ${n(top.plays)} plays` : "", image: top?.imageUrl },
+    { key: "song", question: "Most played song", answer: clean(top?.name ?? ""), detail: top ? `${top.artist} · ${plays(top.plays)}` : "", image: top?.imageUrl },
     { key: "hour", question: "When I play them", answer: part.name, detail: `peaking at ${clock(peakHour)}` },
   ];
 }
@@ -128,7 +129,7 @@ function TopSongs({ dive }: { dive: ArtistDive }) {
                 <p className="truncate">{track.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{track.artist}</p>
               </div>
-              <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{n(track.plays)} plays</span>
+              <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{plays(track.plays)}</span>
             </li>
           ))}
         </ol>
@@ -184,11 +185,11 @@ function Search({ onPick, onClose }: { onPick: (id: string) => void; onClose: ()
       {error && <p className="px-2 pt-2 text-sm text-red-400">Couldn&apos;t load the artists. Try again in a bit.</p>}
       {results.length > 0 && (
         <ul className="mt-1">
-          {results.map(([id, name, plays]) => (
+          {results.map(([id, name, count]) => (
             <li key={id}>
               <button type="button" onClick={() => onPick(id)} className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-white/[0.06] focus-visible:bg-white/[0.06] focus-visible:outline-none">
                 <span className="truncate">{name}</span>
-                <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{n(plays)} plays</span>
+                <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{plays(count)}</span>
               </button>
             </li>
           ))}
