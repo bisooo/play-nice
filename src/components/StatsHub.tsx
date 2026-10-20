@@ -28,7 +28,9 @@ function Tile({ name, href, visual, hook, inside, soon }: { name: string; href?:
       </div>
       <div className="p-3 sm:p-4">
         <p className={`${logo} truncate text-sm text-blue-400 sm:text-lg`}>{name}</p>
-        <p className="mt-1 line-clamp-3 min-h-[3lh] text-sm font-semibold leading-snug sm:line-clamp-2 sm:min-h-[2lh] sm:text-base">{hook}</p>
+        <p className="mt-1 line-clamp-3 min-h-[3lh] text-sm font-semibold leading-snug sm:line-clamp-2 sm:min-h-[2lh] sm:text-base">
+          {hook ? <span className={fadeIn}>{hook}</span> : <span className="mt-1 block h-[0.8lh] w-4/5 animate-pulse rounded bg-white/[0.06]" />}
+        </p>
         <p className="mt-1.5 line-clamp-2 min-h-[2lh] text-xs leading-snug text-muted-foreground sm:text-sm">{inside}</p>
       </div>
     </>
@@ -47,6 +49,9 @@ const Ex = ({ children }: { children: ReactNode }) => (
 );
 
 const Placeholder = () => <div className="h-full w-full animate-pulse bg-white/[0.04]" />;
+// Content that lands after a query eases in instead of popping
+const fadeIn = "animate-in fade-in duration-700 motion-reduce:animate-none";
+const Loaded = ({ children }: { children: ReactNode }) => <div className={`h-full ${fadeIn}`}>{children}</div>;
 
 function ChartsTile({ stats }: { stats: HistoryStats | null }) {
   // The sample: this month across every year, set against the all-time No. 1
@@ -65,6 +70,7 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
       href="/charts"
       visual={
         top ? (
+          <Loaded>
           <div className="flex h-full flex-col justify-center gap-2 bg-gradient-to-br from-blue-500/20 via-transparent to-transparent p-3 sm:p-5">
             <p className={`${logo} text-[11px] uppercase leading-[1.7] sm:text-base sm:leading-[1.6]`}>
               My top <Ex>artists</Ex> every <Ex>{monthName}</Ex>
@@ -82,6 +88,7 @@ function ChartsTile({ stats }: { stats: HistoryStats | null }) {
               ))}
             </div>
           </div>
+          </Loaded>
         ) : <Placeholder />
       }
       hook={
@@ -122,6 +129,7 @@ function ErasTile({ stats }: { stats: HistoryStats | null }) {
       href="/eras"
       visual={
         stats ? (
+          <Loaded>
           <div className="flex h-full flex-col justify-center gap-1 px-3 pb-2 pt-8 sm:gap-1.5 sm:p-5 sm:pt-9">
             {eras.slice(-5).map((era) => (
               <div key={era.year} className="flex items-center gap-2">
@@ -133,6 +141,7 @@ function ErasTile({ stats }: { stats: HistoryStats | null }) {
               </div>
             ))}
           </div>
+          </Loaded>
         ) : <Placeholder />
       }
       hook={erasHook(eras.slice(-5).map((era) => ({ year: era.year, name: era.name ?? "" })))}
@@ -153,6 +162,7 @@ function DeepDiveTile() {
       href="/deep-dive"
       visual={
         dive ? (
+          <Loaded>
           <div className="flex h-full flex-col justify-center gap-1.5 bg-gradient-to-br from-blue-500/20 via-transparent to-transparent p-3 sm:gap-2 sm:p-5">
             <div className="flex items-center gap-2">
               <div className="relative h-6 w-6 shrink-0 sm:h-8 sm:w-8">
@@ -171,6 +181,7 @@ function DeepDiveTile() {
               </div>
             ))}
           </div>
+          </Loaded>
         ) : <Placeholder />
       }
       hook={dive && streak && streak.days > 1 ? `${dive.artist.name}, ${streak.days} days in a row in ${month(streak.to)} ${streak.to.slice(0, 4)}.` : ""}
@@ -255,13 +266,18 @@ export default function StatsHub() {
       {/* Sized to the viewport so it stays on two lines on phones (the longer line is ~14em) and
           one line from laptops up (the whole title is ~27.5em) */}
       <h1 className={`${logo} min-h-[2.8em] text-[min(1.6rem,calc((100vw-2rem)/14.2))] uppercase leading-[1.4] sm:min-h-0 sm:text-[2.6rem] lg:whitespace-nowrap lg:text-[min(2.5rem,calc((100vw-2rem)/28))]`}>
-        {years !== null ? `${NUMBER_WORDS[years] ?? years} years of my listening visualised` : ""}
+        {/* Holds its lines while loading so nothing below jumps when it lands */}
+        <span className={years === null ? "invisible" : fadeIn}>{`${NUMBER_WORDS[years ?? 11] ?? years} years of my listening visualised`}</span>
       </h1>
       {error && <p className="mt-2 text-sm text-red-400">{error.message}. Try again in a bit.</p>}
       <div className="mb-7 mt-4 grid grid-cols-2 gap-x-6 gap-y-2 lg:grid-cols-4">
         {totals.map(([value, label]) => (
           <p key={label}>
-            <span className="text-2xl font-extrabold tabular-nums tracking-tight sm:text-4xl">{value !== undefined ? n(value) : "–"}</span>{" "}
+            {value !== undefined ? (
+              <span className={`text-2xl font-extrabold tabular-nums tracking-tight sm:text-4xl ${fadeIn}`}>{n(value)}</span>
+            ) : (
+              <span className="inline-block h-8 w-20 animate-pulse rounded bg-white/[0.06] align-top sm:h-10 sm:w-28" />
+            )}{" "}
             <span className={`${logo} text-xs uppercase text-muted-foreground sm:text-sm`}>{label}</span>
           </p>
         ))}
