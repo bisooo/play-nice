@@ -34,7 +34,7 @@ Fixed = `GET /api/history/stats` → `stats.<key>` (recomputed daily). Interacti
 |---|---|---|
 | 1 | Top of any slice (built as My Charts, `/charts`) | `/api/history/top?year&month&from&to&country` |
 | 2, 17 | Eras (#2 built as My Eras, `/eras`), hours per year | `eras` (per year: plays, hours, skip rate, top 5 artists, top track) |
-| 3 | Artist deep dive | `/api/history/artist/[id]` (first play + via, per year, peak month, top tracks, streak, by hour) |
+| 3 | Artist deep dive (built as Deep Dive, `/deep-dive`) | `/api/history/artist/[id]` (first play + via, per year, peak month, top tracks, streak, by hour); search: `/api/history/artists` (every artist with counted plays as `[id, name, plays]`, ~100 KB gzipped, fetched when search opens) |
 | 4 | Genre mix | `genres` (per year: top 10 genres with share and top 3 artists) |
 | 5 | Comebacks | `comebacks` |
 | 6 | Forgotten favourites | `forgotten` (not played for 1y+, 30+ plays; page filters 2y/3y by `lastPlayed`) |
