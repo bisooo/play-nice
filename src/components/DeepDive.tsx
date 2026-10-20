@@ -58,7 +58,7 @@ function FlipCard({ fact, up, onFlip }: { fact: Fact; up: boolean; onFlip: () =>
       type="button"
       onClick={onFlip}
       aria-label={up ? `${fact.question}: ${fact.answer}, ${fact.detail}` : `${fact.question}: tap to reveal`}
-      className="relative h-36 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 sm:h-44"
+      className="relative h-32 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 sm:h-36"
       style={{ perspective: "1000px" }}
     >
       <div className="relative h-full w-full transition-transform duration-500 motion-reduce:transition-none" style={{ transformStyle: "preserve-3d", transform: up ? "rotateY(180deg)" : "none" }}>
@@ -67,16 +67,16 @@ function FlipCard({ fact, up, onFlip }: { fact: Fact; up: boolean; onFlip: () =>
           <p className={`${logo} text-[10px] text-blue-400 sm:text-xs`}>TAP TO REVEAL</p>
         </div>
         <div className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-lg border bg-card p-3 sm:p-4" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-          <p className={`${logo} text-[10px] uppercase text-muted-foreground sm:text-xs`}>{fact.question}</p>
+          <p className={`${logo} text-[10px] uppercase text-muted-foreground sm:text-xs ${fact.image !== undefined ? "pr-10 sm:pr-0" : ""}`}>{fact.question}</p>
           <div className="flex items-end gap-2.5">
             {fact.image !== undefined && (
-              <div className="relative h-10 w-10 shrink-0 sm:h-14 sm:w-14">
-                <Image src={fact.image || "/placeholder-album.png"} alt="" fill sizes="56px" className="rounded object-cover" />
+              <div className="absolute right-3 top-3 h-9 w-9 shrink-0 sm:relative sm:right-auto sm:top-auto sm:h-16 sm:w-16">
+                <Image src={fact.image || "/placeholder-album.png"} alt="" fill sizes="64px" className="rounded object-cover" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="line-clamp-2 text-base font-bold leading-tight sm:text-xl">{fact.answer}</p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground sm:text-sm">{fact.detail}</p>
+              <p className="line-clamp-2 text-lg font-bold leading-tight sm:text-[1.75rem]">{fact.answer}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground sm:text-base">{fact.detail}</p>
             </div>
           </div>
         </div>
