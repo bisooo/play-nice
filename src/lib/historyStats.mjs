@@ -340,6 +340,15 @@ export async function topOfSlice(prisma, userId, { year, month, hours: hourRange
   };
 }
 
+// #3's search: every artist with counted plays, most played first, as [id, name, plays] rows
+// to keep the payload small (the page filters it as you type)
+export async function artistList(prisma, userId) {
+  const rows = await aggregate(prisma, userId, [{ $match: { counted: true } }, ...rankArtists(100000)]);
+  const names = await prisma.artist.findMany({ where: { id: { in: rows.map(r => r._id) } }, select: { id: true, name: true } });
+  const nameById = new Map(names.map(a => [a.id, a.name]));
+  return rows.filter(r => nameById.get(r._id)).map(r => [r._id, nameById.get(r._id), r.plays]);
+}
+
 // #3 artist deep dive. Returns null if the artist has no counted plays.
 export async function artistDeepDive(prisma, userId, artistId) {
   const match = { $match: { counted: true, artistIds: artistId } };
