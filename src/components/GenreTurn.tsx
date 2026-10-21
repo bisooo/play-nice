@@ -152,7 +152,7 @@ function Spark({ values, color }: { values: number[]; color: string }) {
   );
 }
 
-function Panel({ years, year, group }: { years: GenreYear[]; year: number; group: Group }) {
+function Panel({ years, year, group, onYear }: { years: GenreYear[]; year: number; group: Group; onYear: (y: number) => void }) {
   const row = years.find((y) => y.year === year)!;
   const data = row.groups!.find((g) => g.key === group.key);
   const shares = years.map((y) => shareOf(y, group.key));
@@ -166,13 +166,20 @@ function Panel({ years, year, group }: { years: GenreYear[]; year: number; group
       </p>
       <div className="mt-3.5 flex h-[86px] gap-1">
         {years.map((y, i) => (
-          <div key={y.year} className="flex min-w-0 flex-1 flex-col items-center gap-[3px]">
+          <button
+            key={y.year}
+            type="button"
+            onClick={() => onYear(y.year)}
+            aria-pressed={y.year === year}
+            aria-label={`${y.year}: ${pct(shares[i])}`}
+            className="flex min-w-0 flex-1 flex-col items-center gap-[3px] rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          >
             <span className={`whitespace-nowrap text-[10px] tabular-nums ${y.year === year ? "font-bold text-white" : "text-muted-foreground"}`}>{shares[i] ? pct(shares[i]) : "–"}</span>
             <span className="flex w-full flex-1 items-end">
               <span className="block w-full rounded-t-[3px]" style={{ height: `${Math.max(2, (shares[i] / max) * 100)}%`, background: group.color, opacity: y.year === year ? 1 : 0.55 }} />
             </span>
             <span className={`text-[10px] ${y.year === year ? "font-bold text-white" : "text-muted-foreground"}`}>’{String(y.year).slice(2)}</span>
-          </div>
+          </button>
         ))}
       </div>
       {!!data?.topArtists.length && (
@@ -259,7 +266,7 @@ export default function GenreTurn() {
                 <Stream years={years} year={year} group={group} onYear={setPicked} onGroup={setGroup} W={1000} H={380} font={18} className="hidden h-auto w-full sm:block" />
                 <Stream years={years} year={year} group={group} onYear={setPicked} onGroup={setGroup} W={600} H={440} font={24} className="h-auto w-full sm:hidden" />
               </div>
-              <Panel years={years} year={year} group={group} />
+              <Panel years={years} year={year} group={group} onYear={setPicked} />
             </div>
           </motion.div>
         )}
